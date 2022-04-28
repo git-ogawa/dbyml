@@ -1,0 +1,24 @@
+---
+name: dbyml-sample
+tag: latest
+path: sample/buildtest
+dockerfile: Dockerfile
+build_args:
+  key1: test1
+  key2: test2
+label:
+  aaa: "this is aaa"
+  build_dir: this is it
+  "com.test.aaa": aaa
+remove_dangling: true
+
+push:
+  enabled: true
+  username: ${REGISTRY_USER}
+  password: ${REGISTRY_PASSWORD}
+  registry:
+    host: ${AUTH_REGISTRY_HOST}
+    port: ${AUTH_REGISTRY_PORT}
+  remove_local: false
+
+verbose: true

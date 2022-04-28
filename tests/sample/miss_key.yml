@@ -1,0 +1,4 @@
+---
+tag: latest
+path: sample/buildtest
+dockerfile: Dockerfile
