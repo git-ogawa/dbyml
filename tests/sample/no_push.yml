@@ -1,0 +1,15 @@
+---
+name: dbyml-sample
+tag: latest
+path: sample/buildtest
+dockerfile: Dockerfile
+build_args:
+  key1: test1
+  key2: test2
+label:
+  aaa: "this is aaa"
+  build_dir: this is it
+  "com.test.aaa": aaa
+remove_dangling: true
+
+verbose: true

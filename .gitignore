@@ -1,0 +1,18 @@
+build/
+dist/
+
+__pycache__/
+output/
+.python-version
+.*_cache/
+.tox/
+.env
+
+# Coverage Files
+htmlcov
+.coverage*
+
+# Packages
+*.egg
+*.egg-info
+*.eggs
