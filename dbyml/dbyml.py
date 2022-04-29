@@ -13,13 +13,12 @@ import sys
 import textwrap
 from pathlib import Path
 from pprint import pprint
-from typing import Any, Optional, Tuple
+from typing import Optional
 
 import docker
 import docker.models.images
 import requests
 from docker.errors import APIError, ImageNotFound
-from requests.auth import HTTPBasicAuth
 from ruamel.yaml import YAML
 
 
@@ -335,7 +334,7 @@ class Registry:
             print(f"{self.image_name} not found in {self.registry}.")
 
 
-def get_config_file() -> Optional[str]:
+def get_config_file() -> Optional[Path]:
     cwd = Path().cwd()
     configs = [cwd / "dbyml.yml", cwd / "dbyml.yaml"]
     for c in configs:

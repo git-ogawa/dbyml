@@ -1,0 +1,46 @@
+---
+name: Lint and static check codes
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - closed
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11-dev"
+    name: Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]" yamllint flake8 mypy types-requests black
+
+      - name: Flake8
+        run: flake8 dbyml
+
+      - name: Black
+        run: black dbyml
+
+      - name: Mypy
+        run: mypy dbyml
+
+      - name: yaml lint
+        run: yamllint sample
+
+      # - name: Pytest
+      #   run: pytest
