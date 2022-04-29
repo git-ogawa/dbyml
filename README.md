@@ -1,4 +1,10 @@
 # docker-build-yaml (dbyml)
+
+![License](https://img.shields.io/github/license/git-ogawa/dbyml)
+[![Version](https://img.shields.io/pypi/v/dbyml)](https://pypi.python.org/pypi/dbyml/)
+[![Python versions](https://img.shields.io/pypi/pyversions/dbyml)](https://pypi.python.org/pypi/dbyml/)
+
+
 docker-build-yaml (dbyml) is a CLI tool to build a docker image with arguments loaded from yaml. Instead of running the `docker build` with many options, write options in config file, build your docker image with them. It helps you to manage build process more readable and flexible.
 
 # Install 
@@ -103,7 +109,7 @@ push:
 ```
 
 
-If you use the basic authentication to access to the registry build by [Native basic auth](20ce6d8ea24dc425342a13cc06b6afed58e71419), you need set `username` and `password` fields under path in the config. 
+If you use the basic authentication to access to the registry build by [Native basic auth](20ce6d8ea24dc425342a13cc06b6afed58e71419), you need set `username` and `password` fields under push in the config. 
 
 ```yaml
 ---
