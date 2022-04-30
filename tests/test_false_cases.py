@@ -1,7 +1,8 @@
 import os
 
 import pytest
-from dbyml.dbyml import DockerImage
+from dbyml.dbyml import DockerImage, Registry
+from docker.errors import ImageNotFound
 from ruamel.yaml import YAML
 from ruamel.yaml.scanner import ScannerError
 
@@ -14,6 +15,17 @@ def test_dockerfile_no_exist():
     with pytest.raises(FileNotFoundError) as e:
         d.build()
     assert str(e.value) == f"{d.dockerfile} does not exist."
+
+
+def test_search_not_exist_image(remove_local_image):
+    d = DockerImage("tests/sample/sample.yml")
+    assert d.get_image() is None
+
+
+def test_remove_not_exist_image_registry():
+    d = DockerImage("tests/sample/sample.yml")
+    assert d.registry.get_digest() is None
+    assert d.registry.remove_repo_image() is None
 
 
 def test_wrong_yml():
