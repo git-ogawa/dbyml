@@ -13,23 +13,24 @@ import sys
 import textwrap
 from pathlib import Path
 from pprint import pprint
-from typing import Optional
+from typing import Optional, Union
 
 import docker
 import docker.models.images
 import requests
 from docker.errors import APIError, ImageNotFound
+from requests.auth import HTTPBasicAuth
 from ruamel.yaml import YAML
 
 
 class DockerImage:
-    def __init__(self, config_file: str = None) -> None:
+    def __init__(self, config_file: Union[str, Path] = None) -> None:
         self.config_file = config_file
         if self.config_file is not None:
             self.load_conf(self.config_file)
         self.client = docker.from_env()
 
-    def load_conf(self, path: str, set_param=True) -> None:
+    def load_conf(self, path: Union[str, Path], set_param: bool = True) -> None:
         """Loads the settings from config file.
 
         Args:
@@ -101,7 +102,7 @@ class DockerImage:
 
         build_dir = config.get("path", None)
         if build_dir is None:
-            self.build_dir = Path(__file__).resolve().parent
+            self.build_dir = Path.cwd()
         else:
             self.build_dir = Path(build_dir).resolve()
 
@@ -110,6 +111,9 @@ class DockerImage:
 
         self.push_param = config.get("push", {})
         if self.push_param != {}:
+            self.username = self.push_param.get("username", "")
+            self.password = self.push_param.get("password", "")
+            self.auth = {"username": self.username, "password": self.password}
             self.registry = Registry(
                 self.push_param.get("protocol", "http"),
                 self.push_param.get("registry", {}).get("host", ""),
@@ -117,8 +121,8 @@ class DockerImage:
                 self.name,
                 self.tag,
                 self.push_param.get("namespace", ""),
-                self.push_param.get("username", ""),
-                self.push_param.get("password", ""),
+                self.username,
+                self.password,
             )
         else:
             self.push_param["enabled"] = False
@@ -210,9 +214,7 @@ class DockerImage:
         """Push a docker image to the registry."""
         self.get_image()
         self.docker_tag()
-        ret = self.client.images.push(
-            self.registry.repository, auth_config=self.registry.auth
-        )
+        ret = self.client.images.push(self.registry.repository, auth_config=self.auth)
         print()
         print("-" * 20 + f"{'push result':^20}" + "-" * 20)
         pprint(ret)
@@ -244,8 +246,8 @@ class DockerImage:
         """
         self.apiclient = docker.APIClient(base_url="unix://var/run/docker.sock")
         try:
-            # ret = self.client.pull(name, auth_config=self.registry.auth)
-            ret = self.apiclient.pull(name, auth_config=self.registry.auth)
+            # ret = self.client.pull(name, auth_config=self.auth)
+            ret = self.apiclient.pull(name, auth_config=self.auth)
             print()
             print("-" * 20 + f"{'pull result':^20}" + "-" * 20)
             pprint(ret)
@@ -305,14 +307,14 @@ class Registry:
 
         self.username = username
         self.password = password
-        self.auth = {"username": self.username, "password": self.password}
+        self.auth = HTTPBasicAuth(self.username, self.password)
 
         self.headers = {
             "Accept": "application/vnd.docker.distribution.manifest.v2+json"
         }
 
     def get_digest(self) -> Optional[str]:
-        ret = requests.get(self.url, headers=self.headers)
+        ret = requests.get(self.url, headers=self.headers, auth=self.auth)
         if ret.status_code == 200:
             return ret.headers.get("Docker-Content-Digest")
         else:
@@ -323,7 +325,7 @@ class Registry:
         if self.digest is not None:
             # Put the digest into url.
             url = re.sub(r"/[^/]+$", f"/{self.digest}", self.url)
-            ret = requests.delete(url, headers=self.headers)
+            ret = requests.delete(url, headers=self.headers, auth=self.auth)
             if ret.status_code == 202:
                 print(
                     f"{self.repository} has been successfully removed from repository."

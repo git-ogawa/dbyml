@@ -1,7 +1,7 @@
 ---
 name: dbyml-sample
 tag: latest
-path: sample/buildtest
+path: tests/sample/buildtest
 dockerfile: Dockerfile
 build_args:
   key1: test1
@@ -14,11 +14,11 @@ remove_dangling: true
 
 push:
   enabled: true
-  username: ${REGISTRY_USER}
-  password: ${REGISTRY_PASSWORD}
+  username: docker
+  password: docker
   registry:
-    host: ${AUTH_REGISTRY_HOST}
-    port: ${AUTH_REGISTRY_PORT}
+    host: "0.0.0.0"
+    port: 5556
   remove_local: false
 
 verbose: true

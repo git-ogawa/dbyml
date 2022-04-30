@@ -1,0 +1,11 @@
+---
+registry:
+  host: pytest-registry
+  internal_port: 5000
+  external_port: 5555
+auth_registry:
+  host: pytest-auth-registry,
+  internal_port: 5000
+  external_port: 5556
+  username: docker
+  password: docker

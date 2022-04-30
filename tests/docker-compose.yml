@@ -1,0 +1,23 @@
+version: '3'
+services:
+  pytest-registry:
+    image: registry:latest
+    container_name: pytest-registry
+    hostname: pytest-registry
+    ports:
+      - "5555:5000"
+    environment:
+      - REGISTRY_STORAGE_DELETE_ENABLED=true
+  pytest-auth-registry:
+    image: registry:latest
+    container_name: pytest-auth-registry
+    hostname: pytest-auth-registry
+    ports:
+      - "5556:5000"
+    volumes:
+      - ./auth:/auth
+    environment:
+      - REGISTRY_STORAGE_DELETE_ENABLED=true
+      - REGISTRY_AUTH=htpasswd
+      - REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm
+      - REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd

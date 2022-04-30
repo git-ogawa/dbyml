@@ -53,6 +53,29 @@ tag: v1.0
 path: path/to/Dockerfile
 ```
 
+### Build-args and Labels
+If you want to set build-args and labels on building, Set `build-args` and `label` fields as list of key-value pairs in config.
+
+```yaml
+---
+name: myimage
+tag: v1.0
+build-args:
+    myarg1: aaa
+    myarg2: bbb
+label:
+    mylabel: ccc
+    author: me
+    "my.domain.com": corporations
+```
+
+The above configuration is corresponding to the following `docker build` command.
+```
+docker build -t myimage:v1.0 . \
+    --build-arg myarg1=aaa --build-arg myarg2=bbb \
+    --label mylabel=ccc --label author=me --label my.domain.com=corporations
+```
+
 # Configuration
 The behavior of dbyml is managed by the config file written in yaml syntax. 
 ## Config file
