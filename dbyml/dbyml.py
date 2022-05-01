@@ -4,6 +4,17 @@ Dbyml is a CLI tool to build your docker image with the arguments loaded from co
 
 Passing the config file where the arguments are listed to build the image from your dockerfile,
 push it to the docker registry.
+
+
+To make sample config file, run the following command.
+
+>>> dbyml --init normal
+
+
+To make config file where all files are listed, run the following command.
+
+>>> dbyml --init full
+
 """
 import argparse
 import json
@@ -29,6 +40,7 @@ class DockerImage:
         if self.config_file is not None:
             self.load_conf(self.config_file)
         self.client = docker.from_env()
+        self.apiclient = docker.APIClient()
 
     def load_conf(self, path: Union[str, Path], set_param: bool = True) -> None:
         """Loads the settings from config file.
@@ -95,10 +107,12 @@ class DockerImage:
 
         self.tag = config.get("tag", "latest")
         self.image_name = f"{self.name}:{self.tag}"
-        self.verbose = config.get("verbose")
+        self.verbose = config.get("verbose", False)
         self.build_args = config.get("build_args", {})
         self.label = config.get("label", {})
-        self.remove_dangling = config.get("remove_dangling")
+        self.remove_dangling = config.get("remove_dangling", False)
+        self.stdout = config.get("stdout", True)
+        self.no_cache = config.get("no_cache", False)
 
         build_dir = config.get("path", None)
         if build_dir is None:
@@ -190,15 +204,44 @@ class DockerImage:
             except ImageNotFound as e:
                 print(f"{e} .... skip.")
 
-        ret = self.client.images.build(
-            path=str(self.build_dir),
-            tag=self.image_name,
-            buildargs=self.build_args,
-            labels=self.label,
-            forcerm=True,
-        )
-        if ret:
+        if self.stdout is True:
+            print()
+            print("-" * 20 + f"{'Build start':^20}" + "-" * 20)
+            for line in self.apiclient.build(
+                path=str(self.build_dir),
+                tag=self.image_name,
+                buildargs=self.build_args,
+                labels=self.label,
+                # forcerm=True,
+                decode=True,
+                nocache=self.no_cache,
+            ):
+                for k, v in line.items():
+                    if k == "error":
+                        print(
+                            "\033[31mAn error has occurred. The details of the error are following.\033[0m"
+                        )
+                        print(v)
+                    else:
+                        if v != "\n":
+                            if isinstance(v, str):
+                                print(v.strip("\n"))
+                            else:
+                                print(v)
+            print()
+            print("-" * 20 + f"{'Build end':^20}" + "-" * 20)
             print(f"Image '{self.image_name}' has been created successfully.")
+        else:
+            ret = self.client.images.build(
+                path=str(self.build_dir),
+                tag=self.image_name,
+                buildargs=self.build_args,
+                labels=self.label,
+                forcerm=True,
+                nocache=self.no_cache,
+            )
+            if ret:
+                print(f"Image '{self.image_name}' has been created successfully.")
 
     # def local_search(self) -> bool:
     #     ret = self.client.search(self.name)
@@ -244,7 +287,6 @@ class DockerImage:
         Raises:
             APIError: Raises when the docker api error occurs.
         """
-        self.apiclient = docker.APIClient(base_url="unix://var/run/docker.sock")
         try:
             # ret = self.client.pull(name, auth_config=self.auth)
             ret = self.apiclient.pull(name, auth_config=self.auth)
@@ -337,12 +379,30 @@ class Registry:
 
 
 def get_config_file() -> Optional[Path]:
-    cwd = Path().cwd()
+    cwd = Path.cwd()
     configs = [cwd / "dbyml.yml", cwd / "dbyml.yaml"]
     for c in configs:
         if c.exists():
             return c
     return None
+
+
+def create_config(config_type: str) -> None:
+    if config_type == "normal":
+        filename = "normal.yml"
+    elif config_type == "full":
+        filename = "full.yml"
+
+    src = Path(__file__).resolve().parent / f"data/{filename}"
+    cwd = Path.cwd()
+    config = cwd / "dbyml.yml"
+    with open(config, "w") as fout:
+        with open(src, "r") as fin:
+            y = YAML()
+            y.dump(y.load(fin), fout)
+    print(
+        f"Create {config.name}. Check the contents and edit according to your docker image."
+    )
 
 
 def main() -> None:
@@ -353,7 +413,18 @@ def main() -> None:
         description=__doc__,
     )
     parser.add_argument("-c", "--conf", type=str, help="Config file.")
+    parser.add_argument(
+        "--init",
+        type=str,
+        choices=["normal", "full"],
+        help="Create sample config file. The acceptable values are 'normal' or 'full'.",
+    )
+
     args = parser.parse_args()
+
+    if args.init:
+        create_config(args.init)
+        sys.exit()
 
     if args.conf:
         config = args.conf
