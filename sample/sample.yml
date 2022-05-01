@@ -29,7 +29,17 @@ label:
   build_info: test
   "com.test.name": test name
 
+# stdout: If set true, show messages while building the image to stdout.
+# Setting false to no output during building.
+# default: true
+stdout: true
+
+# no_cache: Setting true not to use build cache when build the image.
+# default: false
+no_cache: false
+
 # remove_dangling: Setting true to delete the image with the same name:tag as the image to be built from local before building.
+# default: false
 remove_dangling: true
 
 # push fields are required when pushing the image to be built to a registry.
@@ -61,4 +71,5 @@ push:
   remove_local: false
 
 # verbose: Set true to show build settings.
+# default: false
 verbose: true

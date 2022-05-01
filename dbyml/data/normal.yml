@@ -1,0 +1,14 @@
+---
+name: dbyml-sample
+tag: latest
+path: .
+dockerfile: Dockerfile
+build_args:
+  key1: value1
+  key2: value2
+label:
+  label1: label1
+  label2: label2
+stdout: true
+no_cache: false
+remove_dangling: false

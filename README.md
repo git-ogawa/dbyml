@@ -3,7 +3,7 @@
 ![License](https://img.shields.io/github/license/git-ogawa/dbyml)
 [![Version](https://img.shields.io/pypi/v/dbyml)](https://pypi.python.org/pypi/dbyml/)
 [![Python versions](https://img.shields.io/pypi/pyversions/dbyml)](https://pypi.python.org/pypi/dbyml/)
-
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 docker-build-yaml (dbyml) is a CLI tool to build a docker image with arguments loaded from yaml. Instead of running the `docker build` with many options, write options in config file, build your docker image with them. It helps you to manage build process more readable and flexible.
 
@@ -23,7 +23,10 @@ Dbyml is useful for building your docker image. To build an image, you must make
 ```Dockerfile
 FROM alpine:latest
 ARG key1
-RUN echo key1
+RUN echo "$key1" > arg.txt && \
+    cat arg.txt && \
+    rm arg.txt
+
 # You can write any process
 ```
 
@@ -31,10 +34,13 @@ RUN echo key1
     - This is a config file used by dbyml.
     - The image name field `name` is required. 
     - The image tag field `tag` is optional. Default value is `latest`.
+    - To set `ARG key1` in the Dockerfile, Set `build_args` field and key name and its value in config. 
 ```yaml
 ---
 name: myimage
 tag: v1.0
+build_args:
+    key1: "This is set by dbyml."
 ```
 
 
@@ -44,6 +50,8 @@ Run dbyml to build the image from your Dockerfile.
 ```
 dbyml 
 ```
+
+The image `myimage:v1.0` will be created after successfully building the image.
 
 If Dockerfile and config file are not in the same directory, you must set path to the Dockerfile with `path` field in the config.
 ```yaml
@@ -78,12 +86,26 @@ docker build -t myimage:v1.0 . \
 
 # Configuration
 The behavior of dbyml is managed by the config file written in yaml syntax. 
+
+
 ## Config file
 Dbyml automatically searches for config file `dbyml.yml` or `dbyml.yaml` in the execution directory. If you want to use other filename or path, you need run dbyml with `-c` option to specify path to the config.
 
 ```
 dbyml -c [path_to_config_file]
 ```
+
+## Create a config file
+To make a sample config to build your docker image in local, run `dbyml` with `--init normal` option. `dbyml.yml` will be generated in the current directory, so edit image name, tag and etc fields.
+```
+dbyml --init normal
+```
+
+To make the full config including push the image to docker registry, run `dbyml` with `--init full` option.
+```
+dbyml --init full
+```
+
 
 ## ENV variables
 You can use environment variable expressions in config. `${VAR_NAME}` and setting default_value `${VAR_NAME:-default_value}` are supported. Error occurs when the specified env is undefined.
