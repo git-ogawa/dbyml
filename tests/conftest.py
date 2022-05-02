@@ -3,7 +3,7 @@ from pathlib import Path
 import docker
 import pytest
 import requests
-from dbyml import dbyml
+from dbyml import base
 from docker.errors import ImageNotFound
 from requests.exceptions import ConnectionError
 from ruamel.yaml import YAML
@@ -71,7 +71,7 @@ def env_conf() -> dict:
 
 @pytest.fixture
 def obj_full():
-    yield dbyml.DockerImage(full_conf_yml)
+    yield base.DockerImage(full_conf_yml)
 
     client = docker.from_env()
     client.images.remove(test_image)
@@ -81,7 +81,7 @@ def obj_full():
 
 @pytest.fixture
 def obj_minimum():
-    yield dbyml.DockerImage(minimum_conf_yml)
+    yield base.DockerImage(minimum_conf_yml)
 
     client = docker.from_env()
     client.images.remove(test_image)
@@ -91,7 +91,7 @@ def obj_minimum():
 
 @pytest.fixture
 def obj_env():
-    yield dbyml.DockerImage(env_conf_yml)
+    yield base.DockerImage(env_conf_yml)
 
     client = docker.from_env()
     client.images.remove(test_image)
@@ -100,7 +100,7 @@ def obj_env():
 
 @pytest.fixture
 def obj_no_push():
-    yield dbyml.DockerImage(no_push_conf_yml)
+    yield base.DockerImage(no_push_conf_yml)
 
     client = docker.from_env()
     client.images.remove(test_image)
@@ -115,3 +115,19 @@ def remove_local_image() -> None:
         print(f"{test_image} has been successfully removed from local.")
     except ImageNotFound:
         print(f"{test_image} does not exist in local.")
+
+
+@pytest.fixture()
+def clean_config():
+    cwd = Path.cwd()
+    config = cwd / "dbyml.yml"
+
+    # Before test
+    if config.exists():
+        config.unlink()
+
+    yield None
+
+    # After test
+    if config.exists():
+        config.unlink()

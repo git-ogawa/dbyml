@@ -1,9 +1,11 @@
 import subprocess
+import sys
 from pathlib import Path
 
 import docker.models.images
+import pytest
 import requests
-from dbyml import dbyml
+from dbyml import base
 from requests.auth import HTTPBasicAuth
 
 p = Path("tests/sample")
@@ -33,13 +35,13 @@ class TestRegistry:
         obj_full.registry.remove_repo_image()
 
     def test_push_auth_registry(self, test_settings):
-        dby = dbyml.DockerImage(auth_conf_yml)
+        dby = base.DockerImage(auth_conf_yml)
         dby.build()
         dby.push()
 
         assert dby.registry.get_digest()
         dby.remove_local_image(dby.registry.repository)
-        dby.pull(dby.registry.repository, auth=dby.registry.auth)
+        dby.pull(dby.registry.repository, auth=dby.auth)
 
     def test_env_value(self, obj_env):
         obj_env.build()
@@ -48,3 +50,10 @@ class TestRegistry:
             "env_default": "default_value",
             "multi_env": "env1/test/env2.env3",
         }
+
+    def test_entrypoint(self):
+        args = "dbyml -h"
+        sys.argv = args.split()
+        with pytest.raises(SystemExit) as e:
+            base.main()
+        assert e.type == SystemExit

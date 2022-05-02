@@ -1,7 +1,7 @@
 import os
 
 import pytest
-from dbyml.dbyml import DockerImage, Registry
+from dbyml.base import DockerImage, Registry
 from docker.errors import ImageNotFound
 from ruamel.yaml import YAML
 from ruamel.yaml.scanner import ScannerError

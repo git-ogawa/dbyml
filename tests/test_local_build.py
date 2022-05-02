@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import docker.models.images
-from dbyml import dbyml
+from dbyml import base
 
 
 def test_min_setting(obj_minimum):
@@ -21,8 +21,8 @@ def test_local_build(obj_no_push):
     assert check_labels(image, obj_no_push.label)
 
 
-def test_load_default_conf():
-    assert dbyml.get_config_file() is None
+def test_load_default_conf(clean_config):
+    assert base.get_config_file() is None
 
 
 def check_labels(image: docker.models.images.Image, labels: dict) -> bool:

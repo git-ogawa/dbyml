@@ -18,7 +18,7 @@ push:
   password: docker
   registry:
     host: "0.0.0.0"
-    port: 5556
+    port: 5551
   remove_local: false
 
 verbose: true

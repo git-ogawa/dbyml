@@ -8,12 +8,7 @@ push it to the docker registry.
 
 To make sample config file, run the following command.
 
->>> dbyml --init normal
-
-
-To make config file where all files are listed, run the following command.
-
->>> dbyml --init full
+>>> dbyml --init
 
 """
 import argparse
@@ -22,16 +17,18 @@ import os
 import re
 import sys
 import textwrap
+from collections import OrderedDict
 from pathlib import Path
 from pprint import pprint
 from typing import Optional, Union
 
 import docker
 import docker.models.images
-import requests
 from docker.errors import APIError, ImageNotFound
-from requests.auth import HTTPBasicAuth
 from ruamel.yaml import YAML
+
+from dbyml.prompt import Prompt
+from dbyml.registry import Registry
 
 
 class DockerImage:
@@ -39,6 +36,14 @@ class DockerImage:
         self.config_file = config_file
         if self.config_file is not None:
             self.load_conf(self.config_file)
+        self.client = docker.from_env()
+        self.apiclient = docker.APIClient()
+
+    def load_dict(self, param: dict, set_param: bool = True) -> None:
+        self.config = self.parse_config(param)
+        if set_param is True:
+            self.set_param(self.config)
+
         self.client = docker.from_env()
         self.apiclient = docker.APIClient()
 
@@ -212,7 +217,7 @@ class DockerImage:
                 tag=self.image_name,
                 buildargs=self.build_args,
                 labels=self.label,
-                # forcerm=True,
+                forcerm=True,
                 decode=True,
                 nocache=self.no_cache,
             ):
@@ -313,71 +318,6 @@ class DockerImage:
             raise ImageNotFound(message=f"Image '{name}' not found.")
 
 
-class Registry:
-    def __init__(
-        self,
-        protocol: str = "http",
-        host: str = "",
-        port: str = "",
-        name: str = "",
-        tag: str = "",
-        namespace: str = "",
-        username: str = "",
-        password: str = "",
-    ) -> None:
-        self.protocol = protocol
-        self.host = host
-        self.port = port
-        if self.port != "" and self.host != "":
-            self.registry = f"{self.host}:{self.port}"
-        else:
-            self.registry = ""
-
-        self.name = name
-        self.tag = tag
-        self.image_name = f"{self.name}:{self.tag}"
-
-        self.namespace = namespace
-        if self.namespace != "":
-            self.url = f"{self.protocol}://{self.registry}/v2/{self.namespace}/{self.name}/manifests/{self.tag}"
-            self.repository = f"{self.registry}/{self.namespace}/{self.image_name}"
-        else:
-            self.url = (
-                f"{self.protocol}://{self.registry}/v2/{self.name}/manifests/{self.tag}"
-            )
-            self.repository = f"{self.registry}/{self.name}"
-
-        self.username = username
-        self.password = password
-        self.auth = HTTPBasicAuth(self.username, self.password)
-
-        self.headers = {
-            "Accept": "application/vnd.docker.distribution.manifest.v2+json"
-        }
-
-    def get_digest(self) -> Optional[str]:
-        ret = requests.get(self.url, headers=self.headers, auth=self.auth)
-        if ret.status_code == 200:
-            return ret.headers.get("Docker-Content-Digest")
-        else:
-            return None
-
-    def remove_repo_image(self) -> None:
-        self.digest = self.get_digest()
-        if self.digest is not None:
-            # Put the digest into url.
-            url = re.sub(r"/[^/]+$", f"/{self.digest}", self.url)
-            ret = requests.delete(url, headers=self.headers, auth=self.auth)
-            if ret.status_code == 202:
-                print(
-                    f"{self.repository} has been successfully removed from repository."
-                )
-            else:
-                print(f"{self.repository} cannot be removed. ...skip.")
-        else:
-            print(f"{self.image_name} not found in {self.registry}.")
-
-
 def get_config_file() -> Optional[Path]:
     cwd = Path.cwd()
     configs = [cwd / "dbyml.yml", cwd / "dbyml.yaml"]
@@ -387,22 +327,70 @@ def get_config_file() -> Optional[Path]:
     return None
 
 
-def create_config(config_type: str) -> None:
-    if config_type == "normal":
-        filename = "normal.yml"
-    elif config_type == "full":
-        filename = "full.yml"
+def replace_dict_value(d: dict, key: str, value: str) -> dict:
+    """Replace value of the key in given dict.
 
-    src = Path(__file__).resolve().parent / f"data/{filename}"
+    When the given dict contains the key, replace its value the specified one.
+    The value will not be replaced when the key dose not exist in the dict.
+    If the dict is nested, Search the key recursively.
+
+    Args:
+        d (dict): Dict containing the key to be searched.
+        key (str): Key name.
+        value (str): Value name.
+
+    Returns:
+        dict: The dict in which the value of the key is replaced with the specified one.
+    """
+    for k, v in d.items():
+        if k == key:
+            d[key] = value
+            return d
+        if isinstance(v, OrderedDict) or isinstance(v, dict):
+            replace_dict_value(v, key, value)
+    return d
+
+
+def create_config(quiet: bool = False) -> None:
+    src = Path(__file__).resolve().parent / "data" / "full.yml"
     cwd = Path.cwd()
     config = cwd / "dbyml.yml"
+
     with open(config, "w") as fout:
         with open(src, "r") as fin:
             y = YAML()
-            y.dump(y.load(fin), fout)
+            if quiet is True:
+                y.dump(y.load(fin), fout)
+            else:
+                param = Prompt().interactive_prompt()
+                data = y.load(fin)
+                if param["set_registry"] is False:
+                    data.pop("push")
+                for k, v in param.items():
+                    if data.get(k) is not None:
+                        data[k] = v
+                    else:
+                        data = replace_dict_value(data, k, v)
+                y.dump(data, fout)
+                replace_quotes(config)
+
     print(
         f"Create {config.name}. Check the contents and edit according to your docker image."
     )
+
+
+def replace_quotes(path: Path) -> None:
+    """Replace nested quotes into single ones.
+
+    Args:
+        path (Path): A file path in which replace quotes.
+    """
+    # Fix quotes
+    with open(path, "r") as fin:
+        data = re.sub(r"(\'\"|\"\')", "'", fin.read())
+
+    with open(path, "w") as fout:
+        fout.write(data)
 
 
 def main() -> None:
@@ -413,17 +401,18 @@ def main() -> None:
         description=__doc__,
     )
     parser.add_argument("-c", "--conf", type=str, help="Config file.")
+    parser.add_argument("--init", help="Generate config file.", action="store_true")
     parser.add_argument(
-        "--init",
-        type=str,
-        choices=["normal", "full"],
-        help="Create sample config file. The acceptable values are 'normal' or 'full'.",
+        "-q",
+        "--quiet",
+        help="If set with --init flag, generate a config non-interactively.",
+        action="store_true",
     )
 
     args = parser.parse_args()
 
     if args.init:
-        create_config(args.init)
+        create_config(args.quiet)
         sys.exit()
 
     if args.conf:

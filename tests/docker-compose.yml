@@ -5,7 +5,7 @@ services:
     container_name: pytest-registry
     hostname: pytest-registry
     ports:
-      - "5555:5000"
+      - "5550:5000"
     environment:
       - REGISTRY_STORAGE_DELETE_ENABLED=true
   pytest-auth-registry:
@@ -13,7 +13,7 @@ services:
     container_name: pytest-auth-registry
     hostname: pytest-auth-registry
     ports:
-      - "5556:5000"
+      - "5551:5000"
     volumes:
       - ./auth:/auth
     environment:
