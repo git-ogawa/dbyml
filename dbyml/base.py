@@ -118,6 +118,11 @@ class DockerImage:
         self.remove_dangling = config.get("remove_dangling", False)
         self.stdout = config.get("stdout", True)
         self.no_cache = config.get("no_cache", False)
+        self.target = config.get("target", "")
+        self.remove_intermediate_container = config.get(
+            "remove_intermediate_container", True
+        )
+        self.force_rm = config.get("force_rm", True)
 
         build_dir = config.get("path", None)
         if build_dir is None:
@@ -217,8 +222,10 @@ class DockerImage:
                 tag=self.image_name,
                 buildargs=self.build_args,
                 labels=self.label,
-                forcerm=True,
+                rm=self.remove_intermediate_container,
+                forcerm=self.force_rm,
                 decode=True,
+                target=self.target,
                 nocache=self.no_cache,
             ):
                 for k, v in line.items():
@@ -242,21 +249,13 @@ class DockerImage:
                 tag=self.image_name,
                 buildargs=self.build_args,
                 labels=self.label,
-                forcerm=True,
+                rm=self.remove_intermediate_container,
+                forcerm=self.force_rm,
+                target=self.target,
                 nocache=self.no_cache,
             )
             if ret:
                 print(f"Image '{self.image_name}' has been created successfully.")
-
-    # def local_search(self) -> bool:
-    #     ret = self.client.search(self.name)
-    #     try:
-    #         for tag in ret["RepoTags"]:
-    #             if tag == self.image_name:
-    #                 return True
-    #         return False
-    #     except ImageNotFound:
-    #         return False
 
     def push(self) -> None:
         """Push a docker image to the registry."""

@@ -7,6 +7,7 @@
 - [Configuration](#configuration)
     - [Config file](#config-file)
     - [ENV variables](#env-variables)
+    - [Multi-stage build](#multi-stage-build)
     - [Push to repository](#push-to-repository)
     - [other settings](#other-settings)
 
@@ -128,6 +129,16 @@ You can use environment variable expressions in config. `${VAR_NAME}` and settin
 name: ${BASEIMAGE_NAME}
 tag: ${VERSION:-latest}
 ```
+
+## Multi-stage build
+`Target` field specify the name of the phase to build in multi-stage builds. See [Use multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/) for more details on multi-stage builds.
+
+```yaml
+name: myimage
+tag: v1.0
+target: init-stage
+```
+
 
 ## Push to repository
 Dbyml supports to push the image to [docker registry v2](https://hub.docker.com/_/registry) in local. 

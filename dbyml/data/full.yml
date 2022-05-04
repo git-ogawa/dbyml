@@ -3,6 +3,7 @@ name: dbyml-sample
 tag: latest
 path: .
 dockerfile: Dockerfile
+target: ""
 build_args:
   key1: value1
   key2: value2
@@ -11,7 +12,9 @@ label:
   label2: label2
 stdout: true
 no_cache: false
-remove_dangling: false
+remove_intermediate_container: true
+force_rm: true
+remove_dangling: true
 push:
   enabled: true
   username: ${REGISTRY_USER}
@@ -20,5 +23,5 @@ push:
     host: "myregistry.com"
     port: "5000"
   namespace: public
-  remove_local: false
+  remove_local: true
 verbose: true
