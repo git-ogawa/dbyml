@@ -11,4 +11,6 @@ label:
   label2: label2
 stdout: true
 no_cache: false
-remove_dangling: false
+remove_intermediate_container: true
+force_rm: true
+remove_dangling: true

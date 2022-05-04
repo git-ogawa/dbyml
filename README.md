@@ -1,3 +1,17 @@
+- [docker-build-yaml (dbyml)](#docker-build-yaml-dbyml)
+- [Install](#install)
+- [Usage](#usage)
+    - [Preparation](#preparation)
+    - [Build](#build)
+    - [Build-args and Labels](#build-args-and-labels)
+- [Configuration](#configuration)
+    - [Config file](#config-file)
+    - [ENV variables](#env-variables)
+    - [Multi-stage build](#multi-stage-build)
+    - [Push to repository](#push-to-repository)
+    - [other settings](#other-settings)
+
+
 # docker-build-yaml (dbyml)
 
 ![License](https://img.shields.io/github/license/git-ogawa/dbyml)
@@ -61,7 +75,7 @@ tag: v1.0
 path: path/to/Dockerfile
 ```
 
-### Build-args and Labels
+## Build-args and Labels
 If you want to set build-args and labels on building, Set `build-args` and `label` fields as list of key-value pairs in config.
 
 ```yaml
@@ -95,15 +109,15 @@ Dbyml automatically searches for config file `dbyml.yml` or `dbyml.yaml` in the 
 dbyml -c [path_to_config_file]
 ```
 
-## Create a config file
-To make a sample config to build your docker image in local, run `dbyml` with `--init normal` option. `dbyml.yml` will be generated in the current directory, so edit image name, tag and etc fields.
+
+To gerenate a sample config to build your docker image in local, run `dbyml --init`. The config `dbyml.yml` will be generated in the current directory by interactively specifying the values of the fields. You can edit the contents of the config later.
 ```
-dbyml --init normal
+dbyml --init 
 ```
 
-To make the full config including push the image to docker registry, run `dbyml` with `--init full` option.
+Run `dbyml` with `--init -q` options to generate the config non-interactively.
 ```
-dbyml --init full
+dbyml --init -q
 ```
 
 
@@ -115,6 +129,16 @@ You can use environment variable expressions in config. `${VAR_NAME}` and settin
 name: ${BASEIMAGE_NAME}
 tag: ${VERSION:-latest}
 ```
+
+## Multi-stage build
+`Target` field specify the name of the phase to build in multi-stage builds. See [Use multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/) for more details on multi-stage builds.
+
+```yaml
+name: myimage
+tag: v1.0
+target: init-stage
+```
+
 
 ## Push to repository
 Dbyml supports to push the image to [docker registry v2](https://hub.docker.com/_/registry) in local. 
@@ -154,7 +178,7 @@ push:
 ```
 
 
-If you use the basic authentication to access to the registry build by [Native basic auth](20ce6d8ea24dc425342a13cc06b6afed58e71419), you need set `username` and `password` fields under push in the config. 
+If you use the basic authentication to access to the registry build by [Native basic auth](https://docs.docker.com/registry/deploying/#native-basic-auth), you need set `username` and `password` fields under push in the config. 
 
 ```yaml
 ---
@@ -170,5 +194,5 @@ push:
         port: "5000" # Registry port
 ```
 
-## other settings
+## Other settings
 See [sample.yml](sample/sample.yml) for supported fields.
