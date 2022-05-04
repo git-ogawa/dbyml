@@ -1,7 +1,7 @@
 ---
 name: dbyml-sample
 tag: latest
-path: sample/buildtest
+path: tests/config/dockerfiles
 dockerfile: Dockerfile
 build_args:
   key1: test1
@@ -11,5 +11,14 @@ label:
   build_dir: this is it
   "com.test.aaa": aaa
 remove_dangling: true
+
+push:
+  enabled: true
+  username: docker
+  password: docker
+  registry:
+    host: "0.0.0.0"
+    port: 5551
+  remove_local: false
 
 verbose: true

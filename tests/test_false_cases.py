@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 from dbyml.base import DockerImage, Registry
@@ -6,53 +7,67 @@ from docker.errors import ImageNotFound
 from ruamel.yaml import YAML
 from ruamel.yaml.scanner import ScannerError
 
+config = Path("tests/config")
+full_conf = config / "dbyml.yml"
+env_conf = config / "env.yml"
+wrong_conf = config / "wrong.yml"
+
 
 def test_dockerfile_no_exist():
-    d = DockerImage("tests/sample/no_push.yml")
+    image = DockerImage(full_conf)
+
     # Set not exist path.
-    d.config["path"] = "miss"
-    d.set_param(d.config)
+    image.config["path"] = "miss"
+
+    image.set_param(image.config)
     with pytest.raises(FileNotFoundError) as e:
-        d.build()
-    assert str(e.value) == f"{d.dockerfile} does not exist."
+        image.build()
+    assert str(e.value) == f"{image.dockerfile} does not exist."
 
 
 def test_search_not_exist_image(remove_local_image):
-    d = DockerImage("tests/sample/sample.yml")
-    assert d.get_image() is None
+    image = DockerImage(full_conf)
+    assert image.get_image() is None
 
 
 def test_remove_not_exist_image_registry():
-    d = DockerImage("tests/sample/sample.yml")
-    assert d.registry.get_digest() is None
-    assert d.registry.remove_repo_image() is None
+    image = DockerImage(full_conf)
+    # Remove the image from the registry if exists.
+    image.registry.remove_repo_image()
+
+    assert image.registry.get_digest() is None
+    assert image.registry.remove_repo_image() is None
 
 
 def test_wrong_yml():
     with pytest.raises(ScannerError) as e:
-        DockerImage("tests/sample/wrong.yml")
+        DockerImage(wrong_conf)
 
 
 def test_miss_key():
+    # Remove required field.
+    with open(full_conf, "r") as f:
+        params = YAML().load(f)
+        params.pop("name")
     with pytest.raises(SystemExit) as e:
-        DockerImage("tests/sample/miss_key.yml")
+        DockerImage().load_dict(params)
     assert e.type == SystemExit
     assert e.value.code == "Field 'name' is required in config file."
 
 
-def test_undefined_env(env_conf):
-    d = DockerImage("tests/sample/env.yml")
+def test_undefined_env():
+    image = DockerImage(env_conf)
     # Set an undefined env.
-    d.config["label"]["env1"] = r"${ENV_UNDEF}"
+    image.config["label"]["env1"] = r"${ENV_UNDEF}"
     with pytest.raises(KeyError) as e:
-        d.parse_config(d.config)
+        image.parse_config(image.config)
     assert str(e.value) == r"'ENV ${ENV_UNDEF} not defined.'"
 
 
-def test_wrong_env_format(env_conf):
-    d = DockerImage("tests/sample/env.yml")
+def test_wrong_env_format():
+    image = DockerImage(env_conf)
     # Set a wrong-formated env.
-    d.config["label"]["env1"] = r"${ENV1:-ENV2:-ENV3}"
+    image.config["label"]["env1"] = r"${ENV1:-ENV2:-ENV3}"
     with pytest.raises(SyntaxError) as e:
-        d.parse_config(d.config)
+        image.parse_config(image.config)
     assert str(e.value) == r"ENV ${ENV1:-ENV2:-ENV3} is invalid format."

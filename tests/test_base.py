@@ -1,15 +1,15 @@
-import subprocess
 import sys
 from pathlib import Path
 
-import docker.models.images
 import pytest
 import requests
 from dbyml import base
 from requests.auth import HTTPBasicAuth
 
-p = Path("tests/sample")
-auth_conf_yml = p / "auth.yml"
+config = Path("tests/config")
+auth_conf = config / "auth.yml"
+full_conf = config / "dbyml.yml"
+env_conf = config / "env.yml"
 
 
 class TestRegistry:
@@ -25,35 +25,48 @@ class TestRegistry:
         assert response.status_code == 200
         assert response.content.decode() == '{"repositories":[]}\n'
 
-    def test_push_registry(self, obj_full, registry):
+    def test_push_registry(self, registry):
         """Build image in local, push to registry."""
-        obj_full.build()
-        obj_full.push()
+        image = base.DockerImage(full_conf)
+        image.build()
+        image.push()
+        assert image.registry.get_digest()
+        image.registry.remove_repo_image()
 
-        assert obj_full.registry.get_digest()
+    def test_push_auth_registry(self):
+        image = base.DockerImage(auth_conf)
+        image.build()
+        image.push()
+        assert image.registry.get_digest()
+        image.remove_local_image(image.registry.repository)
+        image.pull(image.registry.repository, auth=image.auth)
 
-        obj_full.registry.remove_repo_image()
-
-    def test_push_auth_registry(self, test_settings):
-        dby = base.DockerImage(auth_conf_yml)
-        dby.build()
-        dby.push()
-
-        assert dby.registry.get_digest()
-        dby.remove_local_image(dby.registry.repository)
-        dby.pull(dby.registry.repository, auth=dby.auth)
-
-    def test_env_value(self, obj_env):
-        obj_env.build()
-        assert obj_env.label == {
+    def test_env_value(self):
+        image = base.DockerImage(env_conf)
+        image.build()
+        assert image.label == {
             "env1": "env1",
             "env_default": "default_value",
             "multi_env": "env1/test/env2.env3",
         }
 
-    def test_entrypoint(self):
+
+class TestCLI:
+    def test_help(self):
         args = "dbyml -h"
         sys.argv = args.split()
         with pytest.raises(SystemExit) as e:
             base.main()
         assert e.type == SystemExit
+
+    def test_generate_config_quiet(self, clean_config):
+        args = "dbyml --init -q"
+        sys.argv = args.split()
+        with pytest.raises(SystemExit) as e:
+            base.main()
+        assert e.type == SystemExit
+
+    def test_run_with_config(self, clean_config):
+        args = f"dbyml -c {full_conf}"
+        sys.argv = args.split()
+        base.main()

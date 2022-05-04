@@ -64,51 +64,19 @@ def auth_registry(docker_ip, docker_services, test_settings) -> str:
 
 
 @pytest.fixture
-def env_conf() -> dict:
-    with open(env_conf_yml, "r") as f:
-        return YAML().load(f)
-
-
-@pytest.fixture
-def obj_full():
-    yield base.DockerImage(full_conf_yml)
-
-    client = docker.from_env()
-    client.images.remove(test_image)
-    print(f"{test_image} has been successfully removed from local.")
-    ImageNotFound(message=f"Image {test_image} is not found.")
-
-
-@pytest.fixture
-def obj_minimum():
-    yield base.DockerImage(minimum_conf_yml)
-
-    client = docker.from_env()
-    client.images.remove(test_image)
-    print(f"{test_image} has been successfully removed from local.")
-    ImageNotFound(message=f"Image {test_image} is not found.")
-
-
-@pytest.fixture
-def obj_env():
-    yield base.DockerImage(env_conf_yml)
-
-    client = docker.from_env()
-    client.images.remove(test_image)
-    print(f"{test_image} has been successfully removed from local.")
-
-
-@pytest.fixture
-def obj_no_push():
-    yield base.DockerImage(no_push_conf_yml)
-
-    client = docker.from_env()
-    client.images.remove(test_image)
-    print(f"{test_image} has been successfully removed from local.")
-
-
-@pytest.fixture
 def remove_local_image() -> None:
+    """Remove the docker image in local before each test."""
+    try:
+        client = docker.from_env()
+        client.images.remove(test_image)
+        print(f"{test_image} has been successfully removed from local.")
+    except ImageNotFound:
+        print(f"{test_image} does not exist in local.")
+
+
+@pytest.fixture
+def remove_registry_image() -> None:
+    """Remove the docker image in the registry before each test."""
     try:
         client = docker.from_env()
         client.images.remove(test_image)
@@ -119,6 +87,7 @@ def remove_local_image() -> None:
 
 @pytest.fixture()
 def clean_config():
+    """Remove default config file."""
     cwd = Path.cwd()
     config = cwd / "dbyml.yml"
 
