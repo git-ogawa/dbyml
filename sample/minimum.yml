@@ -1,9 +1,0 @@
----
-#
-# minimum.yml
-# The name field is required. other fields are optional.
-# The tag will be set to latest when the tag field does not exist.
-# With the config, your docker image will be built as "dbyml-sample:latest"
-#
-
-name: dbyml-sample

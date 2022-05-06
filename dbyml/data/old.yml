@@ -1,0 +1,86 @@
+---
+#
+# sample.yml
+# All options are listed.
+#
+
+# name: Image name
+name: dbyml-sample
+
+# tag: Image tag
+tag: latest
+
+# path: Path to a directory containing Dockerfile.
+path: sample/dockerfiles
+
+# dockerfile: Filename of Dockerfile.
+dockerfile: Dockerfile
+
+# target: Name of the build-stage to build in a multi-stage Dockerfile.
+target: ""
+
+# build_args: Arguments corresponding to build-args when use docker build.
+# Set key: value
+build_args:
+  key1: value1
+  key2: value2
+
+# label: Arguments corresponding to label when use docker build.
+# Use quotation when the key name includes "." such as com.test.name
+label:
+  aaa: this is test
+  build_info: test
+  "com.test.name": test name
+
+# stdout: If set true, show messages while building the image to stdout.
+# Set false to no output during build.
+# default: true
+stdout: true
+
+# no_cache: Set true not to use build cache when build the image.
+# default: false
+no_cache: false
+
+# remove_intermediate_container: Set true to remove intermediate containers created during build.
+# default: true
+remove_intermediate_container: true
+
+# force_rm: Set true to always remove intermediate containers, even after unsuccessful builds
+# default: true
+force_rm: true
+
+# remove_dangling: Set true to delete the image with the same name:tag as the image to be built from local before building.
+# default: false
+remove_dangling: true
+
+# push fields are required when pushing the image to be built to a registry.
+push:
+  # enabled: Enable push to a registry. Set false not to push the image
+  # to the registry even if the push fields are set.
+  enabled: true
+
+  # username: Registry auth username
+  username: ${REGISTRY_USER}
+
+  # password: Registry auth password
+  password: ${REGISTRY_PASSWORD}
+
+  # registry: A registry to which push the image.
+  registry:
+    # host: Registry name or ip address.
+    host: "myregistry.com"
+
+    # port: Registry port.
+    port: "5000"
+
+  # namespace:
+  # When set the namespace, the image to be pushed to the registry will be {host}:{port}/{namespace}/{name}:{tag},
+  # otherwise {host}:{port}/{name}:{tag}
+  namespace: public
+
+  # remove_local: Set true to delete the image from local after successfully push to the registry.
+  remove_local: false
+
+# verbose: Set true to show build settings.
+# default: false
+verbose: true

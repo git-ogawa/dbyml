@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 import pytest
-from dbyml.base import create_config
+from dbyml import config
 from dbyml.prompt import Prompt
 
 expected_data = {
@@ -44,7 +44,7 @@ def test_interactive_prompt(mocker, clean_config):
 
 def test_generate_config(mocker, capfd, clean_config):
     Prompt.interactive_prompt = mocker.MagicMock(return_value=expected_data)
-    create_config(quiet=False)
+    config.create(quiet=False)
     out, err = capfd.readouterr()
     assert (
         out

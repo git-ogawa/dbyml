@@ -1,0 +1,23 @@
+---
+name: jupyterlab
+tag: custom
+path: build
+dockerfile: Dockerfile
+target: ''
+label:
+  build_dir: ${PWD}
+stdout: true
+no_cache: false
+remove_intermediate_container: true
+force_rm: true
+remove_dangling: false
+push:
+  enabled: true
+  # username: ${REGISTRY_USER}
+  # password: ${REGISTRY_PASSWORD}
+  registry:
+    host: registry.centre.com
+    port: 448
+  namespace: public
+  remove_local: true
+verbose: true

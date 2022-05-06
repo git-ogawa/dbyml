@@ -1,25 +1,26 @@
 ---
-name: dbyml-sample
-tag: latest
-path: tests/config/dockerfiles
-dockerfile: Dockerfile
-build_args:
-  key1: test1
-  key2: test2
-label:
-  aaa: "this is aaa"
-  build_dir: this is it
-  "com.test.aaa": aaa
-remove_dangling: true
+image:
+  name: dbyml-sample
+  tag: latest
+  path: tests/config/dockerfiles
+  dockerfile: Dockerfile
+  build_args:
+    key1: test1
+    key2: test2
+  label:
+    aaa: "this is aaa"
+    build_dir: this is it
+    "com.test.aaa": aaa
 
-push:
+build:
+  remove_dangling: true
+  verbose: true
+
+registry:
   enabled: true
+  host: "0.0.0.0"
+  port: 5551
   username: docker
   password: docker
-  registry:
-    host: "0.0.0.0"
-    port: 5551
   namespace: public
   remove_local: true
-
-verbose: true

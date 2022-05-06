@@ -2,7 +2,9 @@ import os
 from pathlib import Path
 
 import pytest
-from dbyml.base import DockerImage, Registry
+from dbyml.errors import BuildError
+from dbyml.image import DockerImage
+from dbyml.registry import Registry
 from docker.errors import ImageNotFound
 from ruamel.yaml import YAML
 from ruamel.yaml.scanner import ScannerError
@@ -17,7 +19,7 @@ def test_dockerfile_no_exist():
     image = DockerImage(full_conf)
 
     # Set not exist path.
-    image.config["path"] = "miss"
+    image.config["image"]["path"] = "miss"
 
     image.set_param(image.config)
     with pytest.raises(FileNotFoundError) as e:
@@ -48,7 +50,7 @@ def test_miss_key():
     # Remove required field.
     with open(full_conf, "r") as f:
         params = YAML().load(f)
-        params.pop("name")
+        params["image"].pop("name")
     with pytest.raises(SystemExit) as e:
         DockerImage().load_dict(params)
     assert e.type == SystemExit
@@ -58,7 +60,7 @@ def test_miss_key():
 def test_undefined_env():
     image = DockerImage(env_conf)
     # Set an undefined env.
-    image.config["label"]["env1"] = r"${ENV_UNDEF}"
+    image.config["image"]["label"]["env1"] = r"${ENV_UNDEF}"
     with pytest.raises(KeyError) as e:
         image.parse_config(image.config)
     assert str(e.value) == r"'ENV ${ENV_UNDEF} not defined.'"
@@ -67,7 +69,15 @@ def test_undefined_env():
 def test_wrong_env_format():
     image = DockerImage(env_conf)
     # Set a wrong-formated env.
-    image.config["label"]["env1"] = r"${ENV1:-ENV2:-ENV3}"
+    image.config["image"]["label"]["env1"] = r"${ENV1:-ENV2:-ENV3}"
     with pytest.raises(SyntaxError) as e:
         image.parse_config(image.config)
     assert str(e.value) == r"ENV ${ENV1:-ENV2:-ENV3} is invalid format."
+
+
+def test_build_errors():
+    image = DockerImage(full_conf)
+    image.dockerfile = full_conf.parent / Path("dockerfiles/error_Dockerfile")
+    # image.parse_config(image.config)
+    with pytest.raises(BuildError) as e:
+        image.build()

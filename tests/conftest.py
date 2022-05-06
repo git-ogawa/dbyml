@@ -3,18 +3,11 @@ from pathlib import Path
 import docker
 import pytest
 import requests
-from dbyml import base
 from docker.errors import ImageNotFound
 from requests.exceptions import ConnectionError
 from ruamel.yaml import YAML
 
-p = Path("tests/sample")
 settings_yml = "tests/settings.yml"
-full_conf_yml = p / "sample.yml"
-minimum_conf_yml = p / "minimum.yml"
-no_push_conf_yml = p / "no_push.yml"
-env_conf_yml = p / "env.yml"
-
 test_image = "dbyml-sample:latest"
 
 
