@@ -210,6 +210,7 @@ class DockerImage:
             print("-" * 30 + f"{'Build start':^30}" + "-" * 30)
             for line in self.apiclient.build(
                 path=str(self.build_dir),
+                dockerfile=self.dockerfile.name,
                 tag=self.image_name,
                 buildargs=self.build_args,
                 labels=self.label,
@@ -237,6 +238,7 @@ class DockerImage:
         else:
             ret = self.client.images.build(
                 path=str(self.build_dir),
+                dockerfile=self.dockerfile.name,
                 tag=self.image_name,
                 buildargs=self.build_args,
                 labels=self.label,
