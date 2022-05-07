@@ -1,11 +1,18 @@
 # Changelog
 
-## v1.2.0 (2022-05-05)
+## [v1.3.0](https://github.com/git-ogawa/dbyml/compare/v1.2.0...v1.3.0) (2022-05-08)
+
+### Minor Change
+- Improve syntax in config file.
+
+### Bug Fixes
+- Fix that Dockerfile field in config dose not work on build. 
+## [v1.2.0](https://github.com/git-ogawa/dbyml/compare/v1.1.0...v1.2.0) (2022-05-05)
 
 ### Features
-- Add field to specify build target on multi stage builds. https://github.com/git-ogawa/dbyml/commit/ea16c5c8d5a5752dcfc7bda62c99001e206278dc
-- Add options to generate config file interactively. https://github.com/git-ogawa/dbyml/commit/066c1fcb62f853d45afb5b0509c4d800101dcc8d
-## v1.1.0 (2022-05-02)
+- Add field to specify build target on multi stage builds.
+- Add options to generate config file interactively. 
+## [v1.1.0](https://github.com/git-ogawa/dbyml/compare/v1.1.0...v1.2.0) (2022-05-02)
 
 ### Features
 

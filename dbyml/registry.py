@@ -20,24 +20,20 @@ class Registry:
         self.protocol = protocol
         self.host = host
         self.port = port
-        if self.port != "" and self.host != "":
-            self.registry = f"{self.host}:{self.port}"
-        else:
-            self.registry = ""
-
+        self.domain = f"{self.host}:{self.port}"
         self.name = name
         self.tag = tag
         self.image_name = f"{self.name}:{self.tag}"
 
         self.namespace = namespace
         if self.namespace != "":
-            self.url = f"{self.protocol}://{self.registry}/v2/{self.namespace}/{self.name}/manifests/{self.tag}"
-            self.repository = f"{self.registry}/{self.namespace}/{self.image_name}"
+            self.url = f"{self.protocol}://{self.domain}/v2/{self.namespace}/{self.name}/manifests/{self.tag}"
+            self.repository = f"{self.domain}/{self.namespace}/{self.image_name}"
         else:
             self.url = (
-                f"{self.protocol}://{self.registry}/v2/{self.name}/manifests/{self.tag}"
+                f"{self.protocol}://{self.domain}/v2/{self.name}/manifests/{self.tag}"
             )
-            self.repository = f"{self.registry}/{self.name}"
+            self.repository = f"{self.domain}/{self.name}"
 
         self.username = username
         self.password = password
@@ -67,4 +63,4 @@ class Registry:
             else:
                 print(f"{self.repository} cannot be removed. ...skip.")
         else:
-            print(f"{self.image_name} not found in {self.registry}.")
+            print(f"{self.image_name} not found in {self.domain}.")

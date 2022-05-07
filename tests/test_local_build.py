@@ -1,15 +1,16 @@
 from pathlib import Path
 
 import docker.models.images
-from dbyml import base
+from dbyml import config
+from dbyml.image import DockerImage
 
-config = Path("tests/config")
-full_conf = config / "dbyml.yml"
+conf = Path("tests/config")
+full_conf = conf / "dbyml.yml"
 
 
 def test_local_build():
     """Build image in local, not push to registry."""
-    image = base.DockerImage(full_conf)
+    image = DockerImage(full_conf)
     image.build()
     build_image = image.get_image()
     assert isinstance(build_image, docker.models.images.Image)
@@ -17,7 +18,7 @@ def test_local_build():
 
 
 def test_load_default_conf(clean_config):
-    assert base.get_config_file() is None
+    assert config.get_file() is None
 
 
 def check_labels(image: docker.models.images.Image, labels: dict) -> bool:

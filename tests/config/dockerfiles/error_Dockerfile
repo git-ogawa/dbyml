@@ -1,0 +1,4 @@
+FROM alpine:latest
+
+# Raise error due to wrong library name
+RUN apk add vims
