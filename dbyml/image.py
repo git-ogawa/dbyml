@@ -11,7 +11,7 @@ import docker.models.images
 from docker.errors import APIError, ImageNotFound
 from ruamel.yaml import YAML
 
-from dbyml.errors import BuildError
+from dbyml.errors import BuildError, PushError
 from dbyml.registry import Registry
 
 
@@ -254,12 +254,47 @@ class DockerImage:
         """Push a docker image to the registry."""
         self.get_image()
         self.docker_tag()
-        ret = self.client.images.push(self.registry.repository, auth_config=self.auth)
-        print()
-        print("-" * 25 + f"{'push result':^25}" + "-" * 25)
-        pprint(ret)
-        print("-" * 60)
-        print()
+        if self.stdout is True:
+            print()
+            print("-" * 30 + f"{'Push start':^30}" + "-" * 30)
+
+            counter = 0
+            for line in self.apiclient.push(
+                repository=self.registry.repository,
+                auth_config=self.auth,
+                decode=True,
+                stream=True,
+            ):
+                if line.get("status") == "Pushing":
+                    # Show message every 20 lines to reduce output.
+                    if counter > 20:
+                        counter = 0
+                        print(line)
+                    else:
+                        counter += 1
+                else:
+                    err = line.get("errorDetail")
+                    if err is not None:
+                        print(
+                            "\033[31mAn error has occurred. The details of the error are following.\033[0m"
+                        )
+                        raise PushError(err)
+                    else:
+                        print(line)
+
+            print()
+            print("-" * 30 + f"{'Push end':^30}" + "-" * 30)
+            print(f"Image '{self.image_name}' has been created successfully.")
+        else:
+            ret = self.client.images.push(
+                self.registry.repository, auth_config=self.auth
+            )
+            print()
+            print("-" * 25 + f"{'Push result':^25}" + "-" * 25)
+            pprint(ret)
+            print("-" * 60)
+            print()
+
         if self.remove_local is True:
             self.remove_local_image(self.registry.repository)
 
