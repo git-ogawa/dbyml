@@ -6,10 +6,11 @@
     - [Build-args and Labels](#build-args-and-labels)
 - [Configuration](#configuration)
     - [Config file](#config-file)
+        - [Update from v1.2.0](#update-from-v120)
     - [ENV variables](#env-variables)
     - [Multi-stage build](#multi-stage-build)
     - [Push to repository](#push-to-repository)
-    - [other settings](#other-settings)
+    - [Other settings](#other-settings)
 
 
 # docker-build-yaml (dbyml)
@@ -51,10 +52,11 @@ RUN echo "$key1" > arg.txt && \
     - To set `ARG key1` in the Dockerfile, Set `build_args` field and key name and its value in config. 
 ```yaml
 ---
-name: myimage
-tag: v1.0
-build_args:
-    key1: "This is set by dbyml."
+image:
+    name: myimage
+    tag: v1.0
+    build_args:
+        key1: "This is set by dbyml."
 ```
 
 
@@ -70,9 +72,10 @@ The image `myimage:v1.0` will be created after successfully building the image.
 If Dockerfile and config file are not in the same directory, you must set path to the Dockerfile with `path` field in the config.
 ```yaml
 ---
-name: myimage
-tag: v1.0
-path: path/to/Dockerfile
+image:
+    name: myimage
+    tag: v1.0
+    path: path/to/Dockerfile
 ```
 
 ## Build-args and Labels
@@ -80,15 +83,16 @@ If you want to set build-args and labels on building, Set `build-args` and `labe
 
 ```yaml
 ---
-name: myimage
-tag: v1.0
-build-args:
-    myarg1: aaa
-    myarg2: bbb
-label:
-    mylabel: ccc
-    author: me
-    "my.domain.com": corporations
+image:
+    name: myimage
+    tag: v1.0
+    build-args:
+        myarg1: aaa
+        myarg2: bbb
+    label:
+        mylabel: ccc
+        author: me
+        "my.domain.com": corporations
 ```
 
 The above configuration is corresponding to the following `docker build` command.
@@ -112,7 +116,7 @@ dbyml -c [path_to_config_file]
 
 To gerenate a sample config to build your docker image in local, run `dbyml --init`. The config `dbyml.yml` will be generated in the current directory by interactively specifying the values of the fields. You can edit the contents of the config later.
 ```
-dbyml --init 
+dbyml --init
 ```
 
 Run `dbyml` with `--init -q` options to generate the config non-interactively.
@@ -120,23 +124,33 @@ Run `dbyml` with `--init -q` options to generate the config non-interactively.
 dbyml --init -q
 ```
 
+### Update from v1.2.0
+The contents and syntax in config file has changed since v1.3.0. To Run `--convert` option in order to convert old config to the new one. The converted config `dbyml.yml` will be generated, so edit it according to your configuration.
+
+```
+dbyml --convert [path/to/old/config]
+```
+
+
 
 ## ENV variables
 You can use environment variable expressions in config. `${VAR_NAME}` and setting default_value `${VAR_NAME:-default_value}` are supported. Error occurs when the specified env is undefined.
 
 ```yaml
 ---
-name: ${BASEIMAGE_NAME}
-tag: ${VERSION:-latest}
+image:
+    name: ${BASEIMAGE_NAME}
+    tag: ${VERSION:-latest}
 ```
 
 ## Multi-stage build
 `Target` field specify the name of the phase to build in multi-stage builds. See [Use multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/) for more details on multi-stage builds.
 
 ```yaml
-name: myimage
-tag: v1.0
-target: init-stage
+image:
+    name: myimage
+    tag: v1.0
+    target: init-stage
 ```
 
 
@@ -144,18 +158,18 @@ target: init-stage
 Dbyml supports to push the image to [docker registry v2](https://hub.docker.com/_/registry) in local. 
 
 
-To push the image to be built from your Dockerfile, The `push` fields are required in config. You must set the hostname (or ip address) and port of the registry. Setting `enabled` to true enables these settings. Setting to false disables the settings, which means dose not push the image after building.
+To push the image to be built from your Dockerfile, The `registry` fields are required in config. You must set the hostname (or ip address) and port of the registry. Setting `enabled` to true enables these settings. Setting to false disables the settings, which means dose not push the image after building.
 
 ```yaml
 ---
-name: myimage
-tag: v1.0
+image:
+    name: myimage
+    tag: v1.0
 
-push:
+registry:
     enabled: true
-    registry:
-        host: "myregistry" # Registry hostname or ip address 
-        port: "5000" # Registry port
+    host: "myregistry" # Registry hostname or ip address 
+    port: "5000" # Registry port
 ```
 
 Running `dbyml` with the config will make the docker image `myimage:v1.0`, then push it to the registry as the image name of `myregistry:5000/myimage:v1.0`.
@@ -166,14 +180,14 @@ If you want to add more hierarchy in repository, set `namespace` field in config
 
 ```yaml
 ---
-name: myimage
-tag: v1.0
+image:
+    name: myimage
+    tag: v1.0
 
-push:
+registry:
     enabled: true
-    registry:
-        host: "myregistry" # Registry hostname or ip address 
-        port: "5000" # Registry port
+    host: "myregistry" # Registry hostname or ip address 
+    port: "5000" # Registry port
     namespace: myspace
 ```
 
@@ -182,16 +196,16 @@ If you use the basic authentication to access to the registry build by [Native b
 
 ```yaml
 ---
-name: myimage
-tag: v1.0
+image:
+    name: myimage
+    tag: v1.0
 
-push:
+registry:
     enabled: true
     username: ${username}
     password: ${password}
-    registry:
-        host: "myregistry" # Registry hostname or ip address 
-        port: "5000" # Registry port
+    host: "myregistry" # Registry hostname or ip address 
+    port: "5000" # Registry port
 ```
 
 ## Other settings
