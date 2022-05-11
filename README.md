@@ -7,9 +7,11 @@
 - [Configuration](#configuration)
     - [Config file](#config-file)
         - [Update from v1.2.0](#update-from-v120)
+    - [Docker host](#docker-host)
     - [ENV variables](#env-variables)
     - [Multi-stage build](#multi-stage-build)
     - [Push to repository](#push-to-repository)
+    - [Using TLS](#using-tls)
     - [Other settings](#other-settings)
 
 
@@ -132,6 +134,20 @@ dbyml --convert [path/to/old/config]
 ```
 
 
+## Docker host
+Docker_host under image field specify a host to connect. The default_value is `unix:/var/run/docker.sock`, which means connect to docker daemon on local. Set hostname (or ip address) including protocol and port if you want to build your image on remote docker host.
+
+```yaml
+# Example
+image:
+    # Connect to docker daemon on local.
+    docker_host: "unix:/var/run/docker.sock"
+
+    # Connect to 10.10.10.20:2375 with tcp.
+    # docker_host: "tcp://10.10.10.20:2375"
+```
+
+
 
 ## ENV variables
 You can use environment variable expressions in config. `${VAR_NAME}` and setting default_value `${VAR_NAME:-default_value}` are supported. Error occurs when the specified env is undefined.
@@ -207,6 +223,20 @@ registry:
     host: "myregistry" # Registry hostname or ip address 
     port: "5000" # Registry port
 ```
+
+
+## Using TLS
+To build your image on docker host using TLS (HTTPS), Set the paths to the CA certificate, client certificate and key in each field and enabled to true under `tls` filed. See [Docker documentation](https://docs.docker.com/engine/security/protect-access/#use-tls-https-to-protect-the-docker-daemon-socket) about connection to TLS docker daemon.
+
+```yaml
+---
+tls:
+  enabled: true
+  ca_cert: ca.pem
+  client_cert: cert.pem
+  client_key: key.pem
+```
+
 
 ## Other settings
 See [sample.yml](sample/sample.yml) for supported fields.

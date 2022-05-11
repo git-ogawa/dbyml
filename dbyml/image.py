@@ -8,10 +8,11 @@ from pprint import pprint
 from typing import Optional, Union
 
 import docker.models.images
-from docker.errors import APIError, ImageNotFound
+from docker import APIClient
+from docker.errors import APIError, DockerException, ImageNotFound
 from ruamel.yaml import YAML
 
-from dbyml.errors import BuildError, PushError
+from dbyml.errors import BuildError, DockerConnectionError, PushError
 from dbyml.registry import Registry
 
 
@@ -20,16 +21,12 @@ class DockerImage:
         self.config_file = config_file
         if self.config_file is not None:
             self.load_conf(self.config_file)
-        self.client = docker.from_env()
-        self.apiclient = docker.APIClient()
 
     def load_dict(self, param: dict, set_param: bool = True) -> None:
         self.config = self.parse_config(param)
         if set_param is True:
             self.set_param(self.config)
-
-        self.client = docker.from_env()
-        self.apiclient = docker.APIClient()
+            self.set_client()
 
     def load_conf(self, path: Union[str, Path], set_param: bool = True) -> None:
         """Loads the settings from config file.
@@ -42,6 +39,29 @@ class DockerImage:
             self.config = self.parse_config(YAML().load(f))
         if set_param is True:
             self.set_param(self.config)
+            self.set_client()
+
+    def set_client(self) -> None:
+        """Set docker client."""
+        if self.tls_enabled is True:
+            for f in [self.ca_cert, self.client_cert, self.client_key]:
+                if f is not None:
+                    if not Path(f).exists():
+                        raise FileNotFoundError(f"{f} not found.")
+
+            tls_config = docker.tls.TLSConfig(
+                ca_cert=self.ca_cert, client_cert=(self.client_cert, self.client_key)
+            )
+        else:
+            tls_config = None
+
+        try:
+            self.client = docker.from_env()
+            self.apiclient = APIClient(base_url=self.docker_host, tls=tls_config)
+        except DockerException as e:
+            raise DockerConnectionError(e.args[0])
+
+    # def check_connection(self):
 
     def parse_config(self, config: dict) -> dict:
         """Parse values in config file.
@@ -89,11 +109,8 @@ class DockerImage:
             return v
 
     def set_param(self, config: dict) -> None:
-        image = self.config.get("image", {})
-        build = self.config.get("build", {})
-        registry = self.config.get("registry", {})
-
         # Image section
+        image = self.config.get("image", {})
         try:
             self.name = image["name"]
         except KeyError:
@@ -109,8 +126,10 @@ class DockerImage:
         self.dockerfile = self.build_dir / dockerfile
         self.build_args = image.get("build_args", {})
         self.label = image.get("label", {})
+        self.docker_host = image.get("docker_host", None)
 
         # Build section
+        build = self.config.get("build", {})
         self.target = build.get("target", "")
         self.stdout = build.get("stdout", True)
         self.no_cache = build.get("no_cache", False)
@@ -122,6 +141,7 @@ class DockerImage:
         self.verbose = build.get("verbose", False)
 
         # Registry section
+        registry = self.config.get("registry", {})
         if any(registry):
             self.enabled = registry.get("enabled", True)
             self.username = registry.get("username", "")
@@ -140,6 +160,16 @@ class DockerImage:
             self.remove_local = registry.get("remove_local", True)
         else:
             self.enabled = False
+
+        # TLS section
+        tls = self.config.get("tls", {})
+        if any(tls):
+            self.tls_enabled = tls.get("enabled", False)
+            self.ca_cert = tls.get("ca_cert")
+            self.client_cert = tls.get("client_cert")
+            self.client_key = tls.get("client_key")
+        else:
+            self.tls_enabled = False
 
     def check_dockerfile(self) -> bool:
         """Check that dockerfile to build an image exists.
@@ -234,6 +264,7 @@ class DockerImage:
                                 print(v)
             print()
             print("-" * 30 + f"{'Build end':^30}" + "-" * 30)
+            print()
             print(f"Image '{self.image_name}' has been created successfully.")
         else:
             ret = self.client.images.build(
@@ -284,6 +315,7 @@ class DockerImage:
 
             print()
             print("-" * 30 + f"{'Push end':^30}" + "-" * 30)
+            print()
             print(f"Image '{self.image_name}' has been created successfully.")
         else:
             ret = self.client.images.push(

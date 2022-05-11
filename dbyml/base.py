@@ -52,8 +52,8 @@ def main() -> None:
         conf = args.conf
     else:
         conf = config.get_file()
-        if config is None:
-            parser.print_help()
+        if conf is None:
+            print("Config file not found. Run `dbyml --init` to generate config.")
             sys.exit()
 
     img = DockerImage(conf)

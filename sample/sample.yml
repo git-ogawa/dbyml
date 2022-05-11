@@ -31,6 +31,10 @@ image:
     build_info: test
     "com.test.name": test name
 
+  # docker_host: URL to the Docker server. For example, unix:///var/run/docker.sock or tcp://127.0.0.1:1234.
+  # Default to unix:/var/run/docker.sock.
+  docker_host: "unix:/var/run/docker.sock"
+
 
 # The build field manages messages, intermediates and options on build.
 build:
@@ -87,3 +91,17 @@ registry:
 
   # remove_local: Set true to delete the image from local after successfully push to the registry.
   remove_local: false
+
+# The tls field manages TLS settings on connection to docker daemon.
+tls:
+  # enabled: Set true to enable TLS.
+  enabled: false
+
+  # ca_cert: Path to a CA certificate.
+  ca_cert: ca_cert.pem
+
+  # client_cert: Path to a client certificate.
+  client_cert: cert.pem
+
+  # client_key: Path to a client key/
+  client_key: key.pem
