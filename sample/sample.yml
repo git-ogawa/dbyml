@@ -92,6 +92,16 @@ registry:
   # remove_local: Set true to delete the image from local after successfully push to the registry.
   remove_local: false
 
+  # ca_cert: Path to the registry CA certificates.
+  ca_cert: ca_cert.pem
+
+  # client_cert: Path to client certificate.
+  # client_cert: cert.pem
+
+  # # client_key: Path to the client key.
+  # client_key: key.pem
+
+
 # The tls field manages TLS settings on connection to docker daemon.
 tls:
   # enabled: Set true to enable TLS.
@@ -105,3 +115,47 @@ tls:
 
   # client_key: Path to a client key/
   client_key: key.pem
+
+
+# The buildx field manages some options on multi-platform build using docker buildx
+buildx:
+  # enabled: Set true to enable multi-platform build.
+  enabled: false
+
+  # debug: Set true to show commands to be run using buildx to stdout.
+  debug: false
+
+  # instance: An instance name used on build.
+  instance: multi-builder
+
+  # use_existing_instance: Set true to use the instance with the same name as the `instance` field.
+  # If the instance does not exist yet, it will be created.
+  # Set false to recreate the new one even if the instance with the same name exists.
+  use_existing_instance: false
+
+  # platform: List of platform
+  platform:
+    - linux/amd64
+    - linux/arm64
+
+  # type: Type of buildx output. Only registry type is supported now.
+  type: registry
+
+  # pull_output: Set true to pull the image pushed from the registry.
+  pull_output: true
+
+  # remove_instance: Set true to remove the instance after successfully build the image.
+  remove_instance: false
+
+  # driver_opt: Options passed the instance when it is created.
+  driver_opt:
+    network: host
+
+  # add_host: List of hostname and ip address to be added in /etc/hosts on build node.
+  add_host:
+    myregistry.com1: 192.168.3.100
+
+  # config: Options passed the buildkitd.toml of the node in the instance.
+  # The buildkitd will use this settings.
+  config:
+    http: true

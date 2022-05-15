@@ -1,0 +1,13 @@
+debug = true
+[registry."{{ registry }}"]
+  {%- if http is not none %}
+  http = {{ http | lower }}
+  {%- endif %}
+  {%- if ca_cert is not none %}
+  ca=["{{ ca_cert }}"]
+  {%- endif %}
+  {%- if client_key is not none and client_cert is not none %}
+  [[registry."{{ registry }}".keypair]]
+    key="{{ client_key }}"
+    cert="{{ client_cert }}"
+  {%- endif %}

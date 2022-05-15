@@ -8,13 +8,14 @@ push it to the docker registry.
 
 To make sample config file, run the following command.
 
->>> dbyml --init
+$ dbyml --init
 
 """
 import argparse
 import sys
 
 from dbyml import config
+from dbyml.buildx import Buildx
 from dbyml.image import DockerImage
 
 
@@ -53,13 +54,28 @@ def main() -> None:
     else:
         conf = config.get_file()
         if conf is None:
-            print("Config file not found. Run `dbyml --init` to generate config.")
+            print(
+                (
+                    "Config file not found in the current directory. "
+                    "Run the following commands to generate config file."
+                )
+            )
+            print()
+            print(f"{'dbyml --init':<20} Generate config file interactively.")
+            print(
+                f"{'dbyml --init -q':<20} Generate config file from template non-interactively."
+            )
             sys.exit()
 
     img = DockerImage(conf)
-    img.build()
-    if img.enabled is True:
-        img.push()
+
+    if img.buildx_enabled is True:
+        bx = Buildx.load_conf(img.config)
+        bx.run()
+    else:
+        img.build()
+        if img.enabled is True:
+            img.push()
 
 
 if __name__ == "__main__":

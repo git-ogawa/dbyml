@@ -8,6 +8,9 @@ services:
       - "5550:5000"
     environment:
       - REGISTRY_STORAGE_DELETE_ENABLED=true
+    networks:
+      pytest-network:
+        ipv4_address: 192.168.200.2
   pytest-auth-registry:
     image: registry:latest
     container_name: pytest-auth-registry
@@ -21,3 +24,15 @@ services:
       - REGISTRY_AUTH=htpasswd
       - REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm
       - REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd
+    networks:
+      pytest-network:
+        ipv4_address: 192.168.200.3
+
+networks:
+  pytest-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.200.0/24
+          gateway: 192.168.200.1

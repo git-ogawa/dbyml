@@ -171,6 +171,13 @@ class DockerImage:
         else:
             self.tls_enabled = False
 
+        # Buildx section
+        bx = self.config.get("buildx", {})
+        if any(bx):
+            self.buildx_enabled = bx.get("enabled", False)
+        else:
+            self.buildx_enabled = False
+
     def check_dockerfile(self) -> bool:
         """Check that dockerfile to build an image exists.
 
@@ -352,7 +359,6 @@ class DockerImage:
             APIError: Raises when the docker api error occurs.
         """
         try:
-            # ret = self.client.pull(name, auth_config=self.auth)
             ret = self.apiclient.pull(name, auth_config=self.auth)
             print()
             print("-" * 30 + f"{'pull result':^30}" + "-" * 30)

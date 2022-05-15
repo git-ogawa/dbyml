@@ -10,6 +10,7 @@ image:
   label:
     label1: label1
     label2: label2
+  docker_host: "unix:/var/run/docker.sock"
 
 build:
   target: ""
@@ -28,3 +29,19 @@ registry:
   port: 5000
   namespace: public
   remove_local: true
+
+buildx:
+  enabled: false
+  debug: false
+  instance: multi-builder
+  use_existing_instance: true
+  platform:
+    - linux/amd64
+    - linux/arm64
+  type: registry
+  pull_output: true
+  remove_instance: false
+  driver_opt:
+    network: host
+  config:
+    http: true
