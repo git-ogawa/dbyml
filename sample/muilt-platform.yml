@@ -1,0 +1,36 @@
+---
+#
+# multi-platform.yml
+# Example for build multi-platform image.
+#
+# This example will build image `dbyml-sample:latest` using buildx, push it to the private registry `myregistry.com`. If the registry
+#
+
+image:
+  name: dbyml-sample
+  tag: latest
+
+registry:
+  enabled: true
+  host: "myregistry.com"
+  port: 5000
+  namespace: public
+  ca_cert: ca_cert.pem
+  client_cert: cert.pem
+  client_key: key.pem
+
+buildx:
+  enabled: true
+  debug: true
+  instance: multi-builder
+  use_existing_instance: false
+  platform:
+    - linux/amd64
+    - linux/arm64
+  type: registry
+  pull_output: true
+  remove_instance: false
+  driver_opt:
+    network: host
+  config:
+    http: true

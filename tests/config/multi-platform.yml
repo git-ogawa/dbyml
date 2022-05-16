@@ -1,0 +1,32 @@
+---
+image:
+  name: dbyml-sample
+  path: tests/config/dockerfiles
+  dockerfile: multi-platform-dockerfile
+  label:
+    aaa: "this is aaa"
+    build_dir: this is it
+    "com.test.aaa": aaa
+
+registry:
+  enabled: true
+  host: "192.168.200.2"
+  port: 5000
+  username: docker
+  password: docker
+
+buildx:
+  enabled: true
+  debug: true
+  instance: pytest-multi-builder
+  use_existing_instance: false
+  platform:
+    - linux/amd64
+    - linux/arm64
+  type: registry
+  pull_output: true
+  remove_instance: true
+  driver_opt:
+    network: host
+  config:
+    http: true

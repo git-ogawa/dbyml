@@ -13,27 +13,27 @@ class Registry:
         port: str = "",
         name: str = "",
         tag: str = "",
-        namespace: str = "",
+        namespace: Optional[str] = None,
         username: str = "",
         password: str = "",
+        certs: dict = {},
     ) -> None:
         self.protocol = protocol
         self.host = host
         self.port = port
         self.domain = f"{self.host}:{self.port}"
         self.name = name
-        self.tag = tag
-        self.image_name = f"{self.name}:{self.tag}"
-
+        self.tag = typecheck(tag, "latest")
+        self.image_name = f"{self.name}:{tag}"
         self.namespace = namespace
-        if self.namespace != "":
+        if self.namespace is not None and self.namespace != "":
             self.url = f"{self.protocol}://{self.domain}/v2/{self.namespace}/{self.name}/manifests/{self.tag}"
             self.repository = f"{self.domain}/{self.namespace}/{self.image_name}"
         else:
             self.url = (
                 f"{self.protocol}://{self.domain}/v2/{self.name}/manifests/{self.tag}"
             )
-            self.repository = f"{self.domain}/{self.name}"
+            self.repository = f"{self.domain}/{self.name}:{self.tag}"
 
         self.username = username
         self.password = password
@@ -41,6 +41,12 @@ class Registry:
 
         self.headers = {
             "Accept": "application/vnd.docker.distribution.manifest.v2+json"
+        }
+
+        self.certs = {
+            "ca_cert": certs.get("ca-cert"),
+            "client_key": certs.get("client-key"),
+            "client_cert": certs.get("client-cert"),
         }
 
     def get_digest(self) -> Optional[str]:
@@ -64,3 +70,12 @@ class Registry:
                 print(f"{self.repository} cannot be removed. ...skip.")
         else:
             print(f"{self.image_name} not found in {self.domain}.")
+
+
+def typecheck(str_: Optional[str], default: str) -> str:
+    if str_ is None:
+        return default
+    elif str_ == "":
+        return default
+    else:
+        return str_

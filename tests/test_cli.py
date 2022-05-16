@@ -34,8 +34,8 @@ class TestCLI:
         assert e.type == SystemExit
 
         # Check that run with the config without errors.
-        sys.argv = "dbyml".split()
-        main()
+        # sys.argv = "dbyml".split()
+        # main()
 
     def test_convert_config_same_filename(self, clean_config, capfd):
         tmp = Path("dbyml.yml")

@@ -74,7 +74,11 @@ def checkbox_list(
 
 class Prompt:
     def get_str_data(
-        self, msg: str, validate_msg: str = "", validator: Callable = None
+        self,
+        msg: str,
+        validate_msg: str = "",
+        validator: Callable = None,
+        default: Optional[str] = None,
     ) -> str:
         """Get text from user input.
 
@@ -85,6 +89,7 @@ class Prompt:
             msg (str): The text displayed as user prompt.
             validate_msg (str, optional): The text displayed when input value violates the validation. Defaults to "".
             validator (Callable, optional): A method called for validation. Defaults to None.
+            default (Optional[str], optional): Default value used when user input is empty.
 
         Returns:
             str: The value entered by user.
@@ -93,6 +98,9 @@ class Prompt:
             validator = Validator.common_str
         if validate_msg == "":
             validate_msg = "The max length is 256."
+
+        if default is not None:
+            msg = f"{msg} Default: {default}"
 
         return self.input_prompt(
             msg=msg,
@@ -107,6 +115,7 @@ class Prompt:
         validate_msg: str = "",
         validator: Callable = None,
         continue_msg: str = "",
+        default: Optional[str] = None,
     ) -> dict:
         """Get text from user input, separate its to key and value.
 
@@ -121,6 +130,7 @@ class Prompt:
             validate_msg (str, optional): The text displayed when input value violates the validation. Defaults to "".
             validator (Callable, optional): A method called for validation. Defaults to None.
             continue_msg (str, optional): The text displayed after one key-value pair is set. Defaults to "".
+            default (Optional[str], optional): Default value used when user input is empty.
 
         Returns:
             dict: The key and value entered by user.
@@ -135,10 +145,13 @@ class Prompt:
         if validator is None:
             validator = Validator.common_dict
 
+        if default is not None:
+            msg = f"{msg} Default: {default}"
+
         # Continue with the prompt up to 100.
         while re.search("y|yes", ask.lower()) and num <= 100:
             ret = self.input_prompt(
-                msg=f"{msg} {num}.\n> ",
+                msg=f"{msg} This is {num}th time input.",
                 validate_while_typing=True,
                 validate_msg=validate_msg,
                 _validator=validator,
@@ -147,6 +160,7 @@ class Prompt:
             arg[d[0].strip()] = d[1].strip()
             ask = self.input_prompt(
                 f"{continue_msg} (y/n) :",
+                user_prompt=False,
                 validate_while_typing=False,
                 _validator=None,
             )
@@ -174,10 +188,14 @@ class Prompt:
     def input_prompt(
         self,
         msg: str,
+        user_prompt: bool = True,
         validate_while_typing: bool = False,
         validate_msg: str = "",
         _validator: Callable[[str], bool] = None,
     ) -> str:
+        if user_prompt is True:
+            msg = f"{msg}\n> "
+
         if _validator is not None:
             validator = prompt_toolkit.validation.Validator.from_callable(
                 _validator,
@@ -206,8 +224,8 @@ class Prompt:
             "path": ".",
             "build_args": {},
             "label": {},
-            "username": "docker",
-            "password": "docker",
+            "username": "",
+            "password": "",
             "host": "registry",
             "port": 5000,
             "set_registry": False,
@@ -220,18 +238,19 @@ class Prompt:
         print("-" * 70)
 
         ret["name"] = self.get_str_data(
-            "Input the image name to be built from your Dockerfile.\n> ",
+            "Input the image name to be built from your Dockerfile.",
             "Image name cannot be empty or contain `:`.",
             Validator.common_text,
         )
         ret["tag"] = self.get_str_data(
-            "Input the image tag to be built from your Dockerfile. Default: 'latest'.\n> ",
-            "Tag cannot be empty or contain `:`.",
-            Validator.common_text,
+            "Input the image tag to be built from your Dockerfile.",
+            "Tag cannot contain `:`.",
+            Validator.image_tag,
+            "latest",
         )
 
         tmp = self.get_str_data(
-            "Input path to the directory where your Dockerfile exists. Default: '.'.\n> ",
+            "Input path to the directory where your Dockerfile exists.", default="."
         )
 
         if tmp != "":
@@ -253,16 +272,21 @@ class Prompt:
         if "registry" in options:
             # print(skip_prompt)
             ret["set_registry"] = True
-            ret["username"] = self.get_str_data("Input the username of registry.\n> ")
-            ret["password"] = self.get_str_data("Input the password of registry.\n> ")
+            ret["username"] = self.get_str_data(
+                "Input the username of registry.", default="None"
+            )
+            ret["password"] = self.get_str_data(
+                "Input the password of registry.", default="None"
+            )
             ret["host"] = self.get_str_data(
-                "Input the registry hostname or IP address.\n> "
+                "Input the registry hostname or IP address."
             )
 
             tmp = self.get_str_data(
-                "Input the registry port.\n> ",
-                "Port are valid up to 5 digits.",
+                "Input the registry port.",
+                "The port is valid up to 5 digits.",
                 Validator.registry_port,
+                default="5000",
             )
             if tmp != "":
                 ret["port"] = int(tmp)
@@ -302,14 +326,12 @@ class Validator:
 
         Args:
             text (str): Input text.
+            empty_ok (bool, optional): Whether to accept empty string. Defaults to False.
 
         Returns:
-            bool: True if validation is OK, false otherwise
+            bool: True if validation is OK, False otherwise
         """
-        if ":" not in text and text != "" and len(text) < Validator.max_count:
-            return True
-        else:
-            return False
+        return ":" not in text and text != "" and len(text) < Validator.max_count
 
     @staticmethod
     def common_str(text: str) -> bool:
@@ -319,7 +341,7 @@ class Validator:
             text (str): Input text.
 
         Returns:
-            bool: True if validation is OK, false otherwise
+            bool: True if validation is OK, False otherwise
         """
         return len(text) < Validator.max_count
 
@@ -331,7 +353,7 @@ class Validator:
             text (str): Input text.
 
         Returns:
-            bool: True if validation is OK, false otherwise
+            bool: True if validation is OK, False otherwise
         """
         comp = text.split(":")
         return len(comp) == 2 and comp[0] != "" and len(text) < Validator.max_count
@@ -344,9 +366,24 @@ class Validator:
             text (str): Input text.
 
         Returns:
-            bool: True if validation is OK, false otherwise
+            bool: True if validation is OK, False otherwise
         """
-        return len(text) < Validator.max_port_digit and text.isdigit()
+        if len(text) == 0:
+            return True
+        else:
+            return len(text) < Validator.max_port_digit and text.isdigit()
+
+    @staticmethod
+    def image_tag(text: str) -> bool:
+        """A validator for checking the tag is valid.
+
+        Args:
+            text (str): Input text.
+
+        Returns:
+            bool: True if validation is OK, False otherwise
+        """
+        return ":" not in text and len(text) < Validator.max_count
 
 
 if __name__ == "__main__":

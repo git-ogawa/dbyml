@@ -1,0 +1,7 @@
+FROM golang:latest AS builder
+
+WORKDIR /tmp
+COPY ./webserver.go /tmp
+RUN go build -o app webserver.go
+
+CMD ["/tmp/app"]

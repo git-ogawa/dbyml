@@ -59,13 +59,13 @@ def create(quiet: bool = False) -> None:
             else:
                 param = Prompt().interactive_prompt()
                 data = y.load(fin)
-                if param["set_registry"] is False:
-                    data.pop("push")
                 for k, v in param.items():
                     if data.get(k) is not None:
                         data[k] = v
                     else:
                         data = replace_dict_value(data, k, v)
+                if param["set_registry"] is True:
+                    data["registry"]["enabled"] = True
                 y.dump(data, fout)
                 replace_quotes(config)
 
