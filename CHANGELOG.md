@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.4.0]((https://github.com/git-ogawa/dbyml/compare/v1.3.0...v1.4.0)) (2022-05-16)
+
+### Features
+- Add option to use TLS for connection to docker daemon.
+- Multi-platform build using docker buildx.
+
+
 ## [v1.3.0](https://github.com/git-ogawa/dbyml/compare/v1.2.0...v1.3.0) (2022-05-08)
 
 ### Minor Change
@@ -7,11 +14,15 @@
 
 ### Bug Fixes
 - Fix that Dockerfile field in config dose not work on build. 
+
+
 ## [v1.2.0](https://github.com/git-ogawa/dbyml/compare/v1.1.0...v1.2.0) (2022-05-05)
 
 ### Features
 - Add field to specify build target on multi stage builds.
 - Add options to generate config file interactively. 
+
+
 ## [v1.1.0](https://github.com/git-ogawa/dbyml/compare/v1.1.0...v1.2.0) (2022-05-02)
 
 ### Features
