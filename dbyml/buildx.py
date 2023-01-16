@@ -21,22 +21,22 @@ B = TypeVar("B", bound="Buildx")
 class Buildx:
     def __init__(
         self,
-        add_host: dict = None,
+        add_host: Optional[dict] = None,
         build_args: Optional[dict] = None,
-        config: dict = None,
-        config_file: str = None,
+        config: Optional[dict] = None,
+        config_file: Optional[str] = None,
         debug: bool = False,
         dockerfile: Optional[str] = None,
         driver: str = "docker-container",
-        driver_opt: dict = None,
+        driver_opt: Optional[dict] = None,
         instance: Optional[str] = None,
         label: Optional[dict] = None,
-        name: str = None,
+        name: Optional[str] = None,
         path: str = ".",
-        platform: list = None,
+        platform: Optional[list] = None,
         pull_output: bool = True,
         remove_instance: bool = False,
-        registry: Registry = None,
+        registry: Optional[Registry] = None,
         type_: str = "registry",
         use_existing_instance: bool = True,
     ) -> None:
@@ -178,7 +178,7 @@ class Buildx:
             debug (bool, optional): Whether to show a command to be run. Defaults to False.
 
         Returns:
-            Union[str, list]: The commad output.
+            Union[str, list]: The command output.
         """
         if debug is True:
             print(f"DEBUG: Run command: {cmd}")
@@ -218,7 +218,7 @@ class Buildx:
         except CalledProcessError:
             return None
 
-    def is_executable(self) -> Tuple[bool, Union[str, Tuple[str]]]:
+    def is_executable(self) -> Tuple[bool, str]:
         """Check that docker buildx command is executable.
 
         Check that buildx is executable by return of docker buildx version.
@@ -236,14 +236,14 @@ class Buildx:
             (
                 "Docker buildx is not installed or not found in PATH.\n"
                 "Make sure that run buildx commands such as 'docker buildx version' with no error.\n"
-                "See 'https://docs.docker.com/buildx/working-with-buildx/' for installation.",
+                "See 'https://docs.docker.com/buildx/working-with-buildx/' for installation."
             ),
         )
 
     def run(self) -> None:
-        """Run build pipline.
+        """Run build pipeline.
 
-        The build pipline are executed by the following steps.
+        The build pipeline are executed by the following steps.
 
         - Check that buildx instance exist used on build. If not exist, create the new one.
         - Build an image on a node under the instance. The image will be pushed to a registry after successfully built.
@@ -271,21 +271,15 @@ class Buildx:
                 debug=self.debug,
             )
             if self.instance is not None:
-                print(
-                    f"Build instance '{''.join(self.instance)}' successfully created."
-                )
+                print(f"Build instance '{''.join(self.instance)}' successfully created.")
             else:
                 print("fail")
         else:
             if self.instance_exists(self.instance) is True:
                 if self.use_existing_instance is True:
-                    print(
-                        f"Instance {self.instance} already exists. Use this instance."
-                    )
+                    print(f"Instance {self.instance} already exists. Use this instance.")
                 else:
-                    print(
-                        f"Instance {self.instance} already exists, so will be recreated"
-                    )
+                    print(f"Instance {self.instance} already exists, so will be recreated")
                     self.remove(self.instance)
                     ret = self.create(
                         self.instance,
@@ -296,9 +290,7 @@ class Buildx:
                         debug=self.debug,
                     )
                     if ret is True:
-                        print(
-                            f"Build instance '{''.join(self.instance)}' successfully created."
-                        )
+                        print(f"Build instance '{''.join(self.instance)}' successfully created.")
             else:
                 ret = self.create(
                     self.instance,
@@ -309,9 +301,7 @@ class Buildx:
                     debug=self.debug,
                 )
                 if ret is True:
-                    print(
-                        f"Build instance '{''.join(self.instance)}' successfully created."
-                    )
+                    print(f"Build instance '{''.join(self.instance)}' successfully created.")
 
         if self.add_host is not None:
             self.add_host_node(self.node, self.add_host)
@@ -346,9 +336,7 @@ class Buildx:
             try:
                 cl.images.pull(self.image_name)
                 if self.registry is not None:
-                    print(
-                        f"Image '{self.image_name}' pulled from {self.registry.domain}."
-                    )
+                    print(f"Image '{self.image_name}' pulled from {self.registry.domain}.")
             except APIError as e:
                 if e.response.status == 500:
                     raise APIError(e.response.message.decode())
@@ -398,12 +386,12 @@ class Buildx:
 
     def create(
         self,
-        name: str = None,
+        name: Optional[str] = None,
         use: bool = True,
-        driver: str = None,
-        config: str = None,
-        driver_opt: dict = None,
-        buildkitd_flags: dict = None,
+        driver: Optional[str] = None,
+        config: Optional[str] = None,
+        driver_opt: Optional[dict] = None,
+        buildkitd_flags: Optional[dict] = None,
         debug: bool = False,
     ) -> Optional[str]:
         """Create an instance by buildx command.
@@ -479,13 +467,13 @@ class Buildx:
     def build(
         self,
         tag: str,
-        build_args: dict = None,
-        label: dict = None,
-        target: str = None,
-        dockerfile: str = None,
+        build_args: Optional[dict] = None,
+        label: Optional[dict] = None,
+        target: Optional[str] = None,
+        dockerfile: Optional[str] = None,
         path: str = ".",
-        platform: list = None,
-        type_: str = None,
+        platform: Optional[list] = None,
+        type_: Optional[str] = None,
         debug: bool = False,
     ) -> bool:
         """Build a image, push it to the registry.
@@ -497,7 +485,8 @@ class Buildx:
             tag (str): A image name. The name must contains registry to .
             build_args (dict, optional): Build args corresponding to docker build options. Defaults to None.
             label (dict, optional): Labels corresponding to docker build options. Defaults to None.
-            target (str, optional): Target on multi-stage build corresponding to docker build options. Defaults to None.
+            target (str, optional): Target stage on multi-stage build corresponding to docker build options.
+                Defaults to None.
             dockerfile (str, optional): Dockerfile name. Defaults to None.
             path (str, optional): Path to a directory where Dockerfile exists. Defaults to ".".
             platform (list, optional): Platforms for build. Defaults to None.
@@ -561,13 +550,13 @@ class Buildx:
             return False
 
     def remove(self, name: str) -> bool:
-        """Remove an instace.
+        """Remove an instance.
 
         Args:
-            name (str): An instace name.
+            name (str): An instance name.
 
         Returns:
-            bool: Whether an instace was removed.
+            bool: Whether an instance was removed.
         """
         cmd = f"{self.base_cmd} rm -f {name}"
         try:
@@ -587,10 +576,10 @@ class Buildkitd:
         config: dict = {},
         debug: bool = True,
         http: bool = False,
-        registry: str = None,
-        ca_cert: str = None,
-        client_cert: str = None,
-        client_key: str = None,
+        registry: Optional[str] = None,
+        ca_cert: Optional[str] = None,
+        client_cert: Optional[str] = None,
+        client_key: Optional[str] = None,
     ) -> None:
         self.debug = debug
         self.http = http

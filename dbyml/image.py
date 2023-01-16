@@ -17,7 +17,7 @@ from dbyml.registry import Registry
 
 
 class DockerImage:
-    def __init__(self, config_file: Union[str, Path] = None) -> None:
+    def __init__(self, config_file: Optional[Union[str, Path]] = None) -> None:
         self.config_file = config_file
         if self.config_file is not None:
             self.load_conf(self.config_file)
@@ -49,9 +49,7 @@ class DockerImage:
                     if not Path(f).exists():
                         raise FileNotFoundError(f"{f} not found.")
 
-            tls_config = docker.tls.TLSConfig(
-                ca_cert=self.ca_cert, client_cert=(self.client_cert, self.client_key)
-            )
+            tls_config = docker.tls.TLSConfig(ca_cert=self.ca_cert, client_cert=(self.client_cert, self.client_key))
         else:
             tls_config = None
 
@@ -133,9 +131,7 @@ class DockerImage:
         self.target = build.get("target", "")
         self.stdout = build.get("stdout", True)
         self.no_cache = build.get("no_cache", False)
-        self.remove_intermediate_container = build.get(
-            "remove_intermediate_container", True
-        )
+        self.remove_intermediate_container = build.get("remove_intermediate_container", True)
         self.force_rm = build.get("force_rm", True)
         self.remove_dangling = build.get("remove_dangling", False)
         self.verbose = build.get("verbose", False)
@@ -259,9 +255,7 @@ class DockerImage:
             ):
                 for k, v in line.items():
                     if k == "error":
-                        print(
-                            "\033[31mAn error has occurred. The details of the error are following.\033[0m"
-                        )
+                        print("\033[31mAn error has occurred. The details of the error are following.\033[0m")
                         raise BuildError(v)
                     else:
                         if v != "\n":
@@ -313,9 +307,7 @@ class DockerImage:
                 else:
                     err = line.get("errorDetail")
                     if err is not None:
-                        print(
-                            "\033[31mAn error has occurred. The details of the error are following.\033[0m"
-                        )
+                        print("\033[31mAn error has occurred. The details of the error are following.\033[0m")
                         raise PushError(err)
                     else:
                         print(line)
@@ -325,9 +317,7 @@ class DockerImage:
             print()
             print(f"Image '{self.image_name}' has been created successfully.")
         else:
-            ret = self.client.images.push(
-                self.registry.repository, auth_config=self.auth
-            )
+            ret = self.client.images.push(self.registry.repository, auth_config=self.auth)
             print()
             print("-" * 25 + f"{'Push result':^25}" + "-" * 25)
             pprint(ret)

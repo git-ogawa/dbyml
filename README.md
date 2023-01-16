@@ -4,39 +4,44 @@
 [![Version](https://img.shields.io/pypi/v/dbyml)](https://pypi.python.org/pypi/dbyml/)
 [![Python versions](https://img.shields.io/pypi/pyversions/dbyml)](https://pypi.python.org/pypi/dbyml/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+[![Downloads](https://static.pepy.tech/badge/dbyml)](https://pepy.tech/project/dbyml)
 
 Docker-build-yaml (dbyml) is a CLI tool to build a docker image with build options loaded from yaml. Instead of running the `docker build` with many options, write options in config file, build your docker image with them. It helps you to manage build process more readable and flexible.
 
 # Table of contents
-- [Table of contents](#table-of-contents)
 - [Install](#install)
 - [Usage](#usage)
-    - [Preparation](#preparation)
-    - [Create Dockerfile and Configuration file.](#create-dockerfile-and-configuration-file)
-    - [Build](#build)
-    - [Build-args and Labels](#build-args-and-labels)
-    - [(Experimental) Multi-platform build](#experimental-multi-platform-build)
-        - [Example](#example)
+  - [Prerequisite](#prerequisite)
+  - [Create Dockerfile and Configuration file](#create-dockerfile-and-configuration-file)
+  - [Build an image](#build-an-image)
+  - [Run using docker](#run-using-docker)
+  - [Build-args and Labels](#build-args-and-labels)
+  - [(Experimental) Multi-platform build](#experimental-multi-platform-build)
+  - [Example](#example)
+    - [Settings for registry](#settings-for-registry)
+    - [Insecure registry](#insecure-registry)
+    - [Self-signed certificates](#self-signed-certificates)
+    - [Resolve registry IP](#resolve-registry-ip)
 - [Configuration](#configuration)
-    - [Config file](#config-file)
-        - [Update from v1.2.0](#update-from-v120)
-    - [Docker host](#docker-host)
-    - [ENV variables](#env-variables)
-    - [Multi-stage build](#multi-stage-build)
-    - [Push to repository](#push-to-repository)
-    - [Using TLS](#using-tls)
-    - [Multi-platform build](#multi-platform-build-1)
-    - [Other settings](#other-settings)
+  - [Config file](#config-file)
+    - [Update from v1.2.0](#update-from-v120)
+  - [Docker host](#docker-host)
+  - [ENV variables](#env-variables)
+  - [Multi-stage build](#multi-stage-build)
+  - [Push to repository](#push-to-repository)
+  - [Using TLS](#using-tls)
+  - [Multi-platform build](#multi-platform-build)
+  - [Other settings](#other-settings)
 
 
-# Install 
+# Install
 ```
 $ pip install dbyml
 ```
 
 # Usage
 
-## Preparation
+## Prerequisite
 To use dbyml, Docker Engine must be installed on host for build and run docker commands without root privileges (as non-root user) on client. Refer to [Manage Docker as a non-root user](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user) or [Docker rootless mode](https://docs.docker.com/engine/security/rootless/) for non-root user setting.
 
 ## Create Dockerfile and Configuration file
@@ -57,9 +62,9 @@ RUN echo "$key1" > arg.txt && \
 
 - dbyml.yml
     - This is a config file used by dbyml.
-    - The image name field `name` is required. 
+    - The image name field `name` is required.
     - The image tag field `tag` is optional. Default value is `latest`.
-    - To set `ARG key1` in the Dockerfile, Set `build_args` field and key name and its value in config. 
+    - To set `ARG key1` in the Dockerfile, Set `build_args` field and key name and its value in config.
 ```yaml
 ---
 image:
@@ -70,11 +75,11 @@ image:
 ```
 
 
-## Build 
-Run dbyml to build the image from your Dockerfile. 
+## Build an image
+Run dbyml to build the image from your Dockerfile.
 
 ```
-$ dbyml 
+$ dbyml
 ```
 
 The image `myimage:v1.0` will be created after successfully build.
@@ -93,6 +98,40 @@ Dbyml has other options for build. See each subsection for more details.
 - [Set build-args and labels in image](#build-args-and-labels)
 - [Push the image to a private registry](#push-to-repository)
 - [Multi-platform build](#experimental-multi-platform-build)
+
+
+## Run using docker
+To run dbyml in docker container, mount the followings paths on host to the container on build.
+
+- `/var/run/docker.sock` required to use the docker engine on host in a container.
+- `${PWD}` A directory containing a Dockerfile and dbyml.yml must be mounted in container. See the example below.
+
+
+Generate a configuration file `dbyml.yml`.
+```
+$ docker run --rm -it \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v ${PWD}:/work \
+  docogawa/dbyml:latest --init -q
+
+# Change owner if needed.
+$ sudo chown ${USER}:${USER} dbyml.yml
+```
+
+Build a image from Dockerfile and dbyml.yml in the current directory.
+```
+# Check that Dockerfile and dbyml.yml exist.
+$ ls -1 .
+Dockerfile
+dbyml.yml
+
+# Build a image.
+$ docker run --rm -it \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v ${PWD}:/work \
+  docogawa/dbyml:latest
+```
+
 
 
 ## Build-args and Labels
@@ -121,7 +160,7 @@ docker build -t myimage:v1.0 . \
 
 
 ## (Experimental) Multi-platform build
-Dbyml can build multi-platform image with docker buildx. At first, you need to install buildx in order to enable this feature (See [docker docs buildx](https://docs.docker.com/buildx/working-with-buildx/) for installation). After installing, make sure that can run buildx commands such as `docker buildx version` with no error. 
+Dbyml can build multi-platform image with docker buildx. At first, you need to install buildx in order to enable this feature (See [docker docs buildx](https://docs.docker.com/buildx/working-with-buildx/) for installation). After installing, make sure that can run buildx commands such as `docker buildx version` with no error.
 
 The multi-platform build on dbyml are executed with docker buildx by the follow steps.
 
@@ -151,7 +190,7 @@ buildx:
   enabled: true
   instance: multi-builder
   use_existing_instance: false
-  platform:                        
+  platform:
     - linux/amd64
     - linux/arm64
     - linux/arm/v7
@@ -214,7 +253,7 @@ The instance used for build `multi-builder` and its node `multi-builder0` remain
 ```
 $ docker buildx ls
 NAME/NODE        DRIVER/ENDPOINT             STATUS  PLATFORMS
-multi-builder *  docker-container                    
+multi-builder *  docker-container
   multi-builder0 unix:///var/run/docker.sock running linux/amd64, linux/amd64/v2, linux/amd64/v3, linux/amd64/v4, linux/386
 ```
 
@@ -298,7 +337,7 @@ buildx:
 
 
 # Configuration
-The behavior of dbyml is managed by the config file written in yaml syntax. 
+The behavior of dbyml is managed by the config file written in yaml syntax.
 
 
 ## Config file
@@ -363,7 +402,7 @@ image:
 
 
 ## Push to repository
-Dbyml supports to push the image to [docker registry v2](https://hub.docker.com/_/registry) in local. 
+Dbyml supports to push the image to [docker registry v2](https://hub.docker.com/_/registry) in local.
 
 
 To push the image to be built from your Dockerfile, The `registry` fields are required in config. You must set the hostname (or ip address) and port of the registry. Setting `enabled` to true enables these settings. Setting to false disables the settings, which means dose not push the image after building.
@@ -375,7 +414,7 @@ image:
 
 registry:
     enabled: true
-    host: "myregistry" # Registry hostname or ip address 
+    host: "myregistry" # Registry hostname or ip address
     port: "5000" # Registry port
 ```
 
@@ -392,13 +431,13 @@ image:
 
 registry:
     enabled: true
-    host: "myregistry" # Registry hostname or ip address 
+    host: "myregistry" # Registry hostname or ip address
     port: "5000" # Registry port
     namespace: myspace
 ```
 
 
-If you use the basic authentication to access to the registry build by [Native basic auth](https://docs.docker.com/registry/deploying/#native-basic-auth), you need set `username` and `password` fields under push in the config. 
+If you use the basic authentication to access to the registry build by [Native basic auth](https://docs.docker.com/registry/deploying/#native-basic-auth), you need set `username` and `password` fields under push in the config.
 
 ```yaml
 image:
@@ -409,7 +448,7 @@ registry:
     enabled: true
     username: ${username}
     password: ${password}
-    host: "myregistry" # Registry hostname or ip address 
+    host: "myregistry" # Registry hostname or ip address
     port: "5000" # Registry port
 ```
 
@@ -431,12 +470,12 @@ Dbyml uses [docker buildx](https://github.com/docker/buildx) for multi-platform 
 | key | type | required | description |
 | - | - | - | - |
 | enabled | bool | required | Whether to enable buildx |
-| type | str | required | Output type of build image. Only `registry` is supported now. | 
-| platform | list | required | List of platforms | 
-| instance | str | optional | An instance name used on build | 
-| use_existing_instance | bool | optional | Whether to use the instance with the same name as specified in `instance` field if exists. When false, the instance will be recreated. | 
+| type | str | required | Output type of build image. Only `registry` is supported now. |
+| platform | list | required | List of platforms |
+| instance | str | optional | An instance name used on build |
+| use_existing_instance | bool | optional | Whether to use the instance with the same name as specified in `instance` field if exists. When false, the instance will be recreated. |
 | pull_output | bool | optional | Whether to pull the image from the registry after build. |
-| remove_instance | bool | optional | Whether to remove an instance after build. | 
+| remove_instance | bool | optional | Whether to remove an instance after build. |
 
 
 ## Other settings
