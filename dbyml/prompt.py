@@ -77,7 +77,7 @@ class Prompt:
         self,
         msg: str,
         validate_msg: str = "",
-        validator: Callable = None,
+        validator: Optional[Callable] = None,
         default: Optional[str] = None,
     ) -> str:
         """Get text from user input.
@@ -113,7 +113,7 @@ class Prompt:
         self,
         msg: str,
         validate_msg: str = "",
-        validator: Callable = None,
+        validator: Optional[Callable] = None,
         continue_msg: str = "",
         default: Optional[str] = None,
     ) -> dict:
@@ -162,7 +162,7 @@ class Prompt:
                 f"{continue_msg} (y/n) :",
                 user_prompt=False,
                 validate_while_typing=False,
-                _validator=None,
+                _validator=None,  # type: ignore
             )
             num += 1
         return arg
@@ -175,7 +175,7 @@ class Prompt:
         """
         return checkbox_list(
             title=(
-                "Choose fields you want to set interactively."
+                "Choose the fields you want to set interactively."
                 "Right arrow (->) to check the field then press Enter.\n"
             ),
             values=[
@@ -191,7 +191,7 @@ class Prompt:
         user_prompt: bool = True,
         validate_while_typing: bool = False,
         validate_msg: str = "",
-        _validator: Callable[[str], bool] = None,
+        _validator: Optional[Callable[[str], bool]] = None,
     ) -> str:
         if user_prompt is True:
             msg = f"{msg}\n> "
@@ -232,9 +232,7 @@ class Prompt:
         }
 
         print("-" * 20 + f"{'Interactive prompt start.':^30}" + "-" * 20)
-        print(
-            "Type values you want to set then press Enter. To use default value, press Enter with no input."
-        )
+        print("Type values you want to set then press Enter. To use default value, press Enter with no input.")
         print("-" * 70)
 
         ret["name"] = self.get_str_data(
@@ -249,9 +247,7 @@ class Prompt:
             "latest",
         )
 
-        tmp = self.get_str_data(
-            "Input path to the directory where your Dockerfile exists.", default="."
-        )
+        tmp = self.get_str_data("Input path to the directory where your Dockerfile exists.", default=".")
 
         if tmp != "":
             ret["path"] = tmp
@@ -272,15 +268,9 @@ class Prompt:
         if "registry" in options:
             # print(skip_prompt)
             ret["set_registry"] = True
-            ret["username"] = self.get_str_data(
-                "Input the username of registry.", default="None"
-            )
-            ret["password"] = self.get_str_data(
-                "Input the password of registry.", default="None"
-            )
-            ret["host"] = self.get_str_data(
-                "Input the registry hostname or IP address."
-            )
+            ret["username"] = self.get_str_data("Input the username of registry.", default="None")
+            ret["password"] = self.get_str_data("Input the password of registry.", default="None")
+            ret["host"] = self.get_str_data("Input the registry hostname or IP address.")
 
             tmp = self.get_str_data(
                 "Input the registry port.",

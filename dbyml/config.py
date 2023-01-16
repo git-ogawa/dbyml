@@ -69,9 +69,7 @@ def create(quiet: bool = False) -> None:
                 y.dump(data, fout)
                 replace_quotes(config)
 
-    print(
-        f"Create {config.name}. Check the contents and edit according to your docker image."
-    )
+    print(f"Create {config.name}. Check the contents and edit according to your docker image.")
 
 
 def replace_quotes(path: Path) -> None:
