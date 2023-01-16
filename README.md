@@ -9,13 +9,12 @@
 Docker-build-yaml (dbyml) is a CLI tool to build a docker image with build options loaded from yaml. Instead of running the `docker build` with many options, write options in config file, build your docker image with them. It helps you to manage build process more readable and flexible.
 
 # Table of contents
-- [docker-build-yaml (dbyml)](#docker-build-yaml-dbyml)
-- [Table of contents](#table-of-contents)
 - [Install](#install)
 - [Usage](#usage)
-  - [Preparation](#preparation)
+  - [Prerequisite](#prerequisite)
   - [Create Dockerfile and Configuration file](#create-dockerfile-and-configuration-file)
-  - [Build](#build)
+  - [Build an image](#build-an-image)
+  - [Run using docker](#run-using-docker)
   - [Build-args and Labels](#build-args-and-labels)
   - [(Experimental) Multi-platform build](#experimental-multi-platform-build)
   - [Example](#example)
@@ -42,7 +41,7 @@ $ pip install dbyml
 
 # Usage
 
-## Preparation
+## Prerequisite
 To use dbyml, Docker Engine must be installed on host for build and run docker commands without root privileges (as non-root user) on client. Refer to [Manage Docker as a non-root user](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user) or [Docker rootless mode](https://docs.docker.com/engine/security/rootless/) for non-root user setting.
 
 ## Create Dockerfile and Configuration file
@@ -76,7 +75,7 @@ image:
 ```
 
 
-## Build
+## Build an image
 Run dbyml to build the image from your Dockerfile.
 
 ```
@@ -99,6 +98,40 @@ Dbyml has other options for build. See each subsection for more details.
 - [Set build-args and labels in image](#build-args-and-labels)
 - [Push the image to a private registry](#push-to-repository)
 - [Multi-platform build](#experimental-multi-platform-build)
+
+
+## Run using docker
+To run dbyml in docker container, mount the followings paths on host to the container on build.
+
+- `/var/run/docker.sock` required to use the docker engine on host in a container.
+- `${PWD}` A directory containing a Dockerfile and dbyml.yml must be mounted in container. See the example below.
+
+
+Generate a configuration file `dbyml.yml`.
+```
+$ docker run --rm -it \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v ${PWD}:/work \
+  docogawa/dbyml:latest --init -q
+
+# Change owner if needed.
+$ sudo chown ${USER}:${USER} dbyml.yml
+```
+
+Build a image from Dockerfile and dbyml.yml in the current directory.
+```
+# Check that Dockerfile and dbyml.yml exist.
+$ ls -1 .
+Dockerfile
+dbyml.yml
+
+# Build a image.
+$ docker run --rm -it \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v ${PWD}:/work \
+  docogawa/dbyml:latest
+```
+
 
 
 ## Build-args and Labels
